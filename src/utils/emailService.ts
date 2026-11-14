@@ -68,7 +68,7 @@ export function simulateBookingConfirmationEmail(booking: BookingData): EmailNot
                   <div class="ref-value">${booking.bookingReference}</div>
                 </div>
                 <div>
-                  <span class="badge-paid">✓ PAID & CONFIRMED</span>
+                  <span class="badge-paid">✓ CONFIRMED</span>
                 </div>
               </div>
 
@@ -91,7 +91,7 @@ export function simulateBookingConfirmationEmail(booking: BookingData): EmailNot
                 </div>
                 <div class="grid-item">
                   <div class="item-label">Payment Method</div>
-                  <div class="item-value">${booking.paymentMethod.toUpperCase()} (${booking.paymentDetails?.transactionId || 'Instant Verification'})</div>
+                  <div class="item-value">${booking.paymentMethod.toUpperCase()} ${booking.paymentDetails?.transactionId || ''}</div>
                 </div>
                 <div class="grid-item">
                   <div class="item-label">Contact Phone</div>
@@ -100,7 +100,7 @@ export function simulateBookingConfirmationEmail(booking: BookingData): EmailNot
               </div>
 
               <div class="total-box">
-                <span style="font-weight: 700; font-size: 13px;">Total Tariff (incl. 12% GST):</span>
+                <span style="font-weight: 700; font-size: 13px;">Total Tariff (incl. 5% GST):</span>
                 <span class="total-price">₹${booking.grandTotal.toLocaleString('en-IN')}</span>
               </div>
             </div>

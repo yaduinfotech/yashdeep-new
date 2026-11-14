@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { UserProfile, RedeemableBenefit, BookingData, EmailNotification } from '../types/hotel';
-import { REDEEMABLE_BENEFITS } from '../data/rewardsData';
+import { useHotelData } from '../context/HotelDataContext';
 import {
   X,
   Award,
@@ -45,6 +45,7 @@ export default function RewardsDashboardModal({
   userBookings,
   onOpenBookingWithBenefit,
 }: RewardsDashboardModalProps) {
+  const { benefits } = useHotelData();
   const [activeTab, setActiveTab] = useState<'benefits' | 'history'>('benefits');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [previewEmail, setPreviewEmail] = useState<EmailNotification | null>(null);
@@ -211,22 +212,20 @@ export default function RewardsDashboardModal({
           <button
             type="button"
             onClick={() => setActiveTab('benefits')}
-            className={`pb-3 border-b-2 transition-colors cursor-pointer ${
-              activeTab === 'benefits'
+            className={`pb-3 border-b-2 transition-colors cursor-pointer ${activeTab === 'benefits'
                 ? 'border-amber-400 text-amber-600 dark:text-amber-400 font-bold'
                 : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'
-            }`}
+              }`}
           >
             Redeemable Benefits & Privileges
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('history')}
-            className={`pb-3 border-b-2 transition-colors cursor-pointer ${
-              activeTab === 'history'
+            className={`pb-3 border-b-2 transition-colors cursor-pointer ${activeTab === 'history'
                 ? 'border-amber-400 text-amber-600 dark:text-amber-400 font-bold'
                 : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'
-            }`}
+              }`}
           >
             My Stay History ({userBookings.length})
           </button>
@@ -266,7 +265,7 @@ export default function RewardsDashboardModal({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {REDEEMABLE_BENEFITS.map((benefit) => {
+                {benefits.map((benefit) => {
                   const canAfford = (currentUser?.points || 0) >= benefit.pointsCost;
                   return (
                     <div
@@ -298,11 +297,10 @@ export default function RewardsDashboardModal({
                         <button
                           type="button"
                           onClick={() => handleRedeem(benefit)}
-                          className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
-                            canAfford
+                          className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${canAfford
                               ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-xs'
                               : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                          }`}
+                            }`}
                         >
                           {canAfford ? 'Redeem Voucher' : 'Need More Points'}
                         </button>
@@ -338,7 +336,7 @@ export default function RewardsDashboardModal({
                             {b.bookingReference}
                           </span>
                           <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-950/60 px-2 py-0.5 rounded-sm">
-                            Confirmed & Paid
+                            Confirmed
                           </span>
                         </div>
                         <h4 className="text-sm font-bold text-slate-900 dark:text-white mt-1">

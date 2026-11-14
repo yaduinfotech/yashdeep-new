@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { REVIEWS_DATA } from '../data/hotelData';
+import { useHotelData } from '../context/HotelDataContext';
 import { Review } from '../types/hotel';
 import { Star, CheckCircle, MessageSquarePlus, Sparkles, X } from 'lucide-react';
 import { trackEvent } from '../utils/analytics';
 
 export default function ReviewsSection() {
-  const [reviews, setReviews] = useState<Review[]>(REVIEWS_DATA);
+  const { reviews, addReview } = useHotelData();
   const [filterType, setFilterType] = useState<string>('all');
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
 
@@ -16,15 +16,18 @@ export default function ReviewsSection() {
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
 
+  const averageRating = reviews.length > 0
+    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+    : '4.8';
+
   const filteredReviews = reviews.filter((r) => {
     if (filterType === 'all') return true;
     return r.stayType.toLowerCase().includes(filterType.toLowerCase());
   });
 
-  const handleAddReview = (e: React.FormEvent) => {
+  const handleAddReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    const created: Review = {
-      id: `rev-${Date.now()}`,
+    await addReview({
       author: newAuthor,
       city: newCity || 'Rajasthan',
       rating: newRating,
@@ -32,13 +35,14 @@ export default function ReviewsSection() {
       comment: newComment,
       date: 'Just now',
       verified: true,
-    };
-    setReviews([created, ...reviews]);
+    });
     trackEvent('review_submitted', 'interaction', `Author: ${newAuthor}, Rating: ${newRating}`);
     setIsWriteModalOpen(false);
     setNewAuthor('');
+    setNewCity('');
     setNewComment('');
   };
+
 
   return (
     <section className="py-20 bg-white dark:bg-slate-950 transition-colors">
@@ -59,8 +63,8 @@ export default function ReviewsSection() {
                   <Star key={i} className="w-4 h-4 fill-amber-400" />
                 ))}
               </div>
-              <span className="text-sm font-bold text-slate-900 dark:text-white">4.8 / 5.0</span>
-              <span className="text-xs text-slate-500">· Over 340+ Google & TripAdvisor Reviews</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-white">{averageRating} / 5.0</span>
+              <span className="text-xs text-slate-500">· Over {reviews.length} Verified Reviews</span>
             </div>
           </div>
 
@@ -70,33 +74,30 @@ export default function ReviewsSection() {
               <button
                 type="button"
                 onClick={() => setFilterType('all')}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${
-                  filterType === 'all'
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${filterType === 'all'
                     ? 'bg-amber-400 text-slate-950 font-bold shadow-xs'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 All
               </button>
               <button
                 type="button"
                 onClick={() => setFilterType('business')}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${
-                  filterType === 'business'
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${filterType === 'business'
                     ? 'bg-amber-400 text-slate-950 font-bold shadow-xs'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 Business
               </button>
               <button
                 type="button"
                 onClick={() => setFilterType('wedding')}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${
-                  filterType === 'wedding'
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${filterType === 'wedding'
                     ? 'bg-amber-400 text-slate-950 font-bold shadow-xs'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 Weddings
               </button>
@@ -215,7 +216,7 @@ export default function ReviewsSection() {
                     >
                       <option value="Business">Business Trip</option>
                       <option value="Family">Family Holiday</option>
-                      <option value="Wedding & Event">Wedding & Banquet</option>
+                      <option value="Corporate Gathering">Corporate Gathering</option>
                       <option value="Couple">Couple Stay</option>
                     </select>
                   </div>
@@ -234,9 +235,8 @@ export default function ReviewsSection() {
                         className="p-1 cursor-pointer"
                       >
                         <Star
-                          className={`w-6 h-6 ${
-                            star <= newRating ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-700'
-                          }`}
+                          className={`w-6 h-6 ${star <= newRating ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-700'
+                            }`}
                         />
                       </button>
                     ))}

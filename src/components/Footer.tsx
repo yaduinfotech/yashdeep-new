@@ -1,7 +1,8 @@
-import { HOTEL_INFO } from '../data/hotelData';
+import { useHotelData } from '../context/HotelDataContext';
 import { MapPin, Phone, Mail, Clock, ShieldCheck, Heart } from 'lucide-react';
 
 export default function Footer() {
+  const { hotelInfo } = useHotelData();
   return (
     <footer id="contact" className="bg-slate-950 text-slate-300 border-t border-slate-800 transition-colors">
       {/* Location & Map Direction Highlight */}
@@ -17,10 +18,10 @@ export default function Footer() {
                   Location & Address
                 </p>
                 <p className="text-sm text-slate-200 font-medium leading-relaxed">
-                  {HOTEL_INFO.address}
+                  {hotelInfo.address}
                 </p>
                 <a
-                  href="https://maps.google.com/?q=Yashdeep+Palace+Khuskheda+Opposite+Honda+Car+Gate+4"
+                  href={`https://maps.google.com/?q=${encodeURIComponent(hotelInfo.name + ' ' + hotelInfo.address)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs text-amber-400 hover:underline mt-2 inline-block font-semibold"
@@ -39,13 +40,15 @@ export default function Footer() {
                   Reservations & Concierge
                 </p>
                 <p className="text-sm text-slate-200 font-medium">
-                  {HOTEL_INFO.phone}
+                  {hotelInfo.phone}
                 </p>
-                <p className="text-sm text-slate-400">
-                  {HOTEL_INFO.phoneAlt}
-                </p>
+                {hotelInfo.phoneAlt && (
+                  <p className="text-sm text-slate-400">
+                    {hotelInfo.phoneAlt}
+                  </p>
+                )}
                 <p className="text-xs text-slate-400 mt-1">
-                  Email: {HOTEL_INFO.email}
+                  Email: {hotelInfo.email}
                 </p>
               </div>
             </div>
@@ -59,10 +62,10 @@ export default function Footer() {
                   Palace Timings & Policies
                 </p>
                 <p className="text-sm text-slate-200 font-medium">
-                  Check-in: from {HOTEL_INFO.checkInTime}
+                  Check-in: from {hotelInfo.checkInTime}
                 </p>
                 <p className="text-sm text-slate-200 font-medium">
-                  Check-out: by {HOTEL_INFO.checkOutTime}
+                  Check-out: by {hotelInfo.checkOutTime}
                 </p>
                 <p className="text-xs text-slate-400 mt-1">
                   24/7 Front Desk, Security & In-Room Dining
@@ -77,18 +80,17 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
-            <span className="font-royal text-xl font-bold tracking-wider text-white">
-              YASHDEEP PALACE
+            <span className="font-royal text-xl font-bold tracking-wider text-white uppercase">
+              {hotelInfo.name}
             </span>
             <p className="text-xs text-slate-400 mt-1 max-w-sm">
-              Luxury Hotel, Fine Dining & Regal Banquets in Khuskheda, Bhiwadi-Alwar corridor, Rajasthan.
+              {hotelInfo.subtitle} in Khuskheda, Bhiwadi-Alwar corridor, Rajasthan.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400">
             <a href="#rooms" className="hover:text-white transition-colors">Rooms & Suites</a>
             <a href="#dining" className="hover:text-white transition-colors">The Royal Feast</a>
-            <a href="#banquets" className="hover:text-white transition-colors">Wedding Banquets</a>
             <a href="#gallery" className="hover:text-white transition-colors">Guest Gallery</a>
             <a href="#contact" className="hover:text-white transition-colors">Contact</a>
           </div>

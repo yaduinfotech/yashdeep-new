@@ -1,27 +1,30 @@
 import { useState } from 'react';
 import { MessageCircle, Phone, X, Send, Calendar, Sparkles } from 'lucide-react';
 import { trackEvent } from '../utils/analytics';
+import { useHotelData } from '../context/HotelDataContext';
 
 interface FloatingSocialBarProps {
   onOpenBooking: () => void;
 }
 
 export default function FloatingSocialBar({ onOpenBooking }: FloatingSocialBarProps) {
+  const { hotelInfo } = useHotelData();
   const [isOpen, setIsOpen] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
+  const rawPhone = hotelInfo?.phone?.replace(/\D/g, '') || '918222020699';
 
   const handleSendWhatsApp = (e: React.FormEvent) => {
     e.preventDefault();
-    const text = chatMessage.trim() || 'Hello Yashdeep Palace Front Desk, I would like to inquire about room availability and tariffs.';
+    const text = chatMessage.trim() || `Hello ${hotelInfo.name} Front Desk, I would like to inquire about room availability and tariffs.`;
     trackEvent('whatsapp_concierge_chat', 'interaction', `Msg: ${text}`);
-    window.open(`https://wa.me/918222020699?text=${encodeURIComponent(text)}`, '_blank');
+    window.open(`https://wa.me/${rawPhone}?text=${encodeURIComponent(text)}`, '_blank');
     setChatMessage('');
     setIsOpen(false);
   };
 
   const handleCall = () => {
-    trackEvent('direct_phone_call', 'click', 'Call +918222020699');
-    window.location.href = 'tel:+918222020699';
+    trackEvent('direct_phone_call', 'click', `Call ${hotelInfo.phone}`);
+    window.location.href = `tel:${hotelInfo.phone}`;
   };
 
   return (
@@ -57,7 +60,7 @@ export default function FloatingSocialBar({ onOpenBooking }: FloatingSocialBarPr
                 Namaste! Welcome to Yashdeep Palace.
               </p>
               <p className="text-slate-600 dark:text-slate-400">
-                How may we assist you today? We can arrange corporate stay discounts, banquet bookings, or airport transfers.
+                How may we assist you today? We can arrange corporate stay discounts, table reservations at The Royal Feast, or express check-in.
               </p>
             </div>
 
@@ -69,14 +72,14 @@ export default function FloatingSocialBar({ onOpenBooking }: FloatingSocialBarPr
                 onClick={() => setChatMessage('Hi, what is the best corporate rate for executive rooms this week?')}
                 className="w-full text-left p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] hover:border-emerald-500 text-slate-700 dark:text-slate-300 transition-colors"
               >
-                🏢 Corporate room inquiry
+                🏢 Corporate room tariff inquiry
               </button>
               <button
                 type="button"
-                onClick={() => setChatMessage('Hello, I want to check wedding / banquet hall availability for 300 guests.')}
+                onClick={() => setChatMessage('Hello, I would like to reserve a dining table at The Royal Feast.')}
                 className="w-full text-left p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] hover:border-emerald-500 text-slate-700 dark:text-slate-300 transition-colors"
               >
-                💍 Wedding / banquet gathering inquiry
+                🍽️ Table reservation inquiry
               </button>
             </div>
           </div>

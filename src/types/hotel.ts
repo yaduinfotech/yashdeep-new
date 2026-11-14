@@ -54,6 +54,7 @@ export interface BookingData {
   checkInTimestamp?: string;
   checkOutTimestamp?: string;
   appliedRewardBenefit?: string;
+  roomChangeHistory?: RoomChange[];
   paymentDetails?: {
     upiId?: string;
     cardLast4?: string;
@@ -82,7 +83,7 @@ export interface UserProfile {
   name: string;
   email: string;
   avatar: string;
-  tier: 'Silver Executive' | 'Gold Royal' | 'Platinum Maharaja';
+  tier: 'Silver Executive' | 'Gold Royal' | 'Platinum Maharaja' | '';
   points: number;
   memberSince: string;
   redeemedBenefits: string[];
@@ -147,25 +148,6 @@ export interface GuestFolioItem {
   createdAt: string;
 }
 
-export interface BanquetEvent {
-  id: number;
-  eventName: string;
-  clientName: string;
-  companyName?: string | null;
-  phone: string;
-  email: string;
-  hallName: string;
-  eventDate: string;
-  guestCount: number;
-  cateringPackage?: string | null;
-  totalAmount: number;
-  advancePaid: number;
-  balanceDue: number;
-  status: 'confirmed' | 'tentative' | 'completed' | 'cancelled';
-  specialRequests?: string | null;
-  createdAt: string;
-}
-
 export interface ManagerProfile {
   id: number;
   email: string;
@@ -184,9 +166,91 @@ export interface HMSOverview {
   todayArrivals: number;
   todayDepartures: number;
   totalRoomRevenue: number;
-  totalBanquetRevenue: number;
-  upcomingBanquetsCount: number;
 }
+
+export interface HotelInfo {
+  name: string;
+  subtitle: string;
+  address: string;
+  phone: string;
+  phoneAlt: string;
+  email: string;
+  checkInTime: string;
+  checkOutTime: string;
+  rating: number;
+  totalReviews: number;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  highlights: string[];
+}
+
+export interface DiningSpecial {
+  id: string;
+  name: string;
+  price: string;
+  category: string;
+}
+
+export interface DiningInfo {
+  restaurantName: string;
+  cuisine: string;
+  timings: {
+    breakfast: string;
+    lunch: string;
+    dinner: string;
+  };
+  description: string;
+  specials: DiningSpecial[];
+}
+export interface RoomChange {
+  id: string;
+  bookingReference: string;
+  fromRoomNumber: string;
+  toRoomNumber: string;
+  reason: string;
+  changedBy: string;
+  changedAt: string;
+}
+
+export interface Expense {
+  id: string;
+  category: 'laundry' | 'food_beverage' | 'diesel_generator' | 'maintenance' | 'utilities' | 'staff_welfare' | 'supplies' | 'other';
+  description: string;
+  amount: number;
+  paymentMethod: 'cash' | 'bank_transfer' | 'upi' | 'card' | 'cheque';
+  date: string;
+  recordedBy: string;
+  receiptNumber?: string;
+  createdAt: string;
+}
+
+export interface ServiceRequest {
+  id: string;
+  roomNumber: string;
+  guestName: string;
+  requestType: 'room_service' | 'housekeeping' | 'maintenance' | 'laundry' | 'bell_desk' | 'amenities' | 'other';
+  priority: 'low' | 'medium' | 'urgent';
+  description: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  assignedTo?: string;
+  notes?: string;
+  requestedAt: string;
+  completedAt?: string;
+}
+
+export interface StaffUser {
+  id: number;
+  email: string;
+  name: string;
+  role: 'admin' | 'general_manager' | 'front_desk' | 'housekeeping';
+  isActive: boolean;
+  lastLoginAt?: string;
+}
+
+
+
 
 
 

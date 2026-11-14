@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Mail, Sparkles, Check, Copy, Tag, Gift } from 'lucide-react';
 import { trackEvent } from '../utils/analytics';
+import { addOfflineNewsletterSubscriber } from '../utils/offlineSqlite';
 
 export default function NewsletterRetention() {
   const [email, setEmail] = useState('');
@@ -13,11 +14,7 @@ export default function NewsletterRetention() {
     if (!email || !email.includes('@')) return;
 
     try {
-      const subscribers = JSON.parse(localStorage.getItem('ydp_newsletter_subscribers') || '[]');
-      if (!subscribers.includes(email)) {
-        subscribers.push(email);
-        localStorage.setItem('ydp_newsletter_subscribers', JSON.stringify(subscribers));
-      }
+      await addOfflineNewsletterSubscriber(email);
       await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,7 +52,7 @@ export default function NewsletterRetention() {
           Join the Yashdeep Royal Circle
         </h2>
         <p className="text-sm sm:text-base text-slate-300 max-w-xl mx-auto mb-8 leading-relaxed">
-          Subscribe to receive secret seasonal tariff offers, priority banquet dates, and an instant
+          Subscribe to receive secret seasonal tariff offers, priority dates, and an instant
           15% welcome discount voucher for your next stay.
         </p>
 

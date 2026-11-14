@@ -33,7 +33,7 @@ export default function EmailPreviewModal({ isOpen, onClose, email }: EmailPrevi
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                  Simulated Email Delivery
+                  Send Email
                 </span>
                 <span className="text-slate-300 dark:text-slate-700">·</span>
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-sm">

@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { GALLERY_ITEMS } from '../data/hotelData';
+import { useHotelData } from '../context/HotelDataContext';
 import { GalleryItem } from '../types/hotel';
 import { Heart, Instagram, Sparkles, ZoomIn, X, ExternalLink } from 'lucide-react';
 import { trackEvent } from '../utils/analytics';
 
 export default function InteractiveGallery() {
-  const [items, setItems] = useState<GalleryItem[]>(GALLERY_ITEMS);
+  const { gallery } = useHotelData();
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryItem | null>(null);
 
@@ -13,19 +13,9 @@ export default function InteractiveGallery() {
     e.stopPropagation();
     const isLiked = likedMap[id];
     setLikedMap((prev) => ({ ...prev, [id]: !isLiked }));
-    setItems((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          return {
-            ...item,
-            likes: isLiked ? item.likes - 1 : item.likes + 1,
-          };
-        }
-        return item;
-      })
-    );
     trackEvent('gallery_like_click', 'click', `PostId: ${id}, NowLiked: ${!isLiked}`);
   };
+
 
   const handleOpenPhoto = (item: GalleryItem) => {
     setSelectedPhoto(item);
@@ -65,8 +55,9 @@ export default function InteractiveGallery() {
 
         {/* Gallery Bento Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {items.map((item) => {
+          {gallery.map((item) => {
             const isLiked = likedMap[item.id];
+            const displayLikes = isLiked ? item.likes + 1 : item.likes;
             return (
               <div
                 key={item.id}
@@ -107,7 +98,7 @@ export default function InteractiveGallery() {
                       }`}
                     />
                     <span className="text-[10px] font-bold tabular-nums text-white">
-                      {item.likes}
+                      {displayLikes}
                     </span>
                   </button>
                 </div>

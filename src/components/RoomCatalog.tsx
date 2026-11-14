@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Room } from '../types/hotel';
-import { ROOMS_DATA } from '../data/hotelData';
 import { Users, Maximize, Bed, Check, Sparkles, Star, ChevronRight, Info } from 'lucide-react';
 import RoomCardSkeleton from './RoomCardSkeleton';
 import { trackEvent } from '../utils/analytics';
@@ -15,7 +14,7 @@ interface RoomCatalogProps {
 
 export default function RoomCatalog({
   isLoading,
-  rooms = ROOMS_DATA,
+  rooms = [],
   onSelectRoomForBooking,
   selectedCategory,
   onCategoryChange,
@@ -48,61 +47,15 @@ export default function RoomCatalog({
               <span>Accommodations & Living</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold font-royal text-slate-900 dark:text-white">
-              Luxury Rooms & Royal Suites
+              Luxury Rooms
             </h2>
             <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl">
-              Every room is meticulously appointed with acoustic soundproofing, orthopedic beds,
-              high-speed optical Wi-Fi, and plush Rajasthani hospitality.
+              Every room is meticulously appointed with acoustic soundproofing, confortable beds,
+              high-speed optical Wi-Fi, and best hospitality.
             </p>
           </div>
 
-          {/* Interactive Category Segmented Control */}
-          <div className="flex items-center gap-1.5 p-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs self-start md:self-auto overflow-x-auto max-w-full">
-            <button
-              onClick={() => onCategoryChange('all')}
-              type="button"
-              className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
-                selectedCategory === 'all'
-                  ? 'bg-amber-400 text-slate-950 shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              All Rooms ({ROOMS_DATA.length})
-            </button>
-            <button
-              onClick={() => onCategoryChange('deluxe')}
-              type="button"
-              className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
-                selectedCategory === 'deluxe'
-                  ? 'bg-amber-400 text-slate-950 shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Deluxe Executive
-            </button>
-            <button
-              onClick={() => onCategoryChange('suite')}
-              type="button"
-              className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
-                selectedCategory === 'suite'
-                  ? 'bg-amber-400 text-slate-950 shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Palace Suites
-            </button>
-            <button
-              onClick={() => onCategoryChange('family')}
-              type="button"
-              className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
-                selectedCategory === 'family'
-                  ? 'bg-amber-400 text-slate-950 shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Family Suites
-            </button>
-          </div>
+
         </div>
 
         {/* Room Grid */}
@@ -110,128 +63,128 @@ export default function RoomCatalog({
           {isLoading
             ? Array.from({ length: 4 }).map((_, i) => <RoomCardSkeleton key={i} />)
             : filteredRooms.map((room) => (
-                <div
-                  key={room.id}
-                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col group"
-                >
-                  {/* Room Image Container */}
-                  <div className="relative aspect-16/10 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                    <img
-                      src={room.image}
-                      alt={room.name}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        // Fallback image handling
-                        (e.target as HTMLImageElement).src = '/src/assets/images/hero_yashdeep_palace_1794500883865.jpg';
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
+              <div
+                key={room.id}
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col group"
+              >
+                {/* Room Image Container */}
+                <div className="relative aspect-16/10 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                  <img
+                    src={room.image}
+                    alt={room.name}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      // Fallback image handling
+                      (e.target as HTMLImageElement).src = '/src/assets/images/hero_yashdeep_palace_1794500883865.jpg';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
 
-                    {/* Unboxed Status Kicker */}
-                    {room.isPopular && (
-                      <span className="absolute top-3 left-3 bg-amber-400 text-slate-950 text-xs font-bold px-2.5 py-1 rounded-md shadow-xs">
-                        Most Booked
+                  {/* Unboxed Status Kicker */}
+                  {room.isPopular && (
+                    <span className="absolute top-3 left-3 bg-amber-400 text-slate-950 text-xs font-bold px-2.5 py-1 rounded-md shadow-xs">
+                      Most Booked
+                    </span>
+                  )}
+
+                  {/* Star Rating Overlay */}
+                  <div className="absolute bottom-3 left-4 flex items-center gap-1.5 text-white text-xs font-medium bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-md">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    <span>{room.rating.toFixed(1)}</span>
+                    <span className="text-slate-300">({room.reviewsCount} reviews)</span>
+                  </div>
+
+                  {/* Available Count */}
+                  <div className="absolute bottom-3 right-4 text-xs font-medium text-amber-300 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-md">
+                    {room.availableUnits} left today
+                  </div>
+                </div>
+
+                {/* Room Card Body */}
+                <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
+                  <div>
+                    {/* Quiet Unboxed Metadata */}
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
+                      <span className="flex items-center gap-1">
+                        <Maximize className="w-3.5 h-3.5" />
+                        {room.sizeSqFt} sq ft
                       </span>
-                    )}
-
-                    {/* Star Rating Overlay */}
-                    <div className="absolute bottom-3 left-4 flex items-center gap-1.5 text-white text-xs font-medium bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-md">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span>{room.rating.toFixed(1)}</span>
-                      <span className="text-slate-300">({room.reviewsCount} reviews)</span>
+                      <span aria-hidden="true">·</span>
+                      <span className="flex items-center gap-1">
+                        <Bed className="w-3.5 h-3.5" />
+                        {room.bedType}
+                      </span>
+                      <span aria-hidden="true">·</span>
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5" />
+                        Up to {room.maxOccupancy} Guests
+                      </span>
                     </div>
 
-                    {/* Available Count */}
-                    <div className="absolute bottom-3 right-4 text-xs font-medium text-amber-300 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-md">
-                      {room.availableUnits} left today
+                    <h3 className="text-xl font-bold font-royal text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                      {room.name}
+                    </h3>
+                    <p className="text-xs text-amber-700 dark:text-amber-300/90 font-medium mt-0.5 mb-3">
+                      {room.tagline}
+                    </p>
+
+                    <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                      {room.description}
+                    </p>
+
+                    {/* Amenities Snapshot */}
+                    <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
+                      {room.amenities.slice(0, 4).map((amenity, idx) => (
+                        <div key={idx} className="flex items-center gap-1.5 truncate">
+                          <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <span className="truncate">{amenity}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Room Card Body */}
-                  <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
+                  {/* Price and CTA Actions */}
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
                     <div>
-                      {/* Quiet Unboxed Metadata */}
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
-                        <span className="flex items-center gap-1">
-                          <Maximize className="w-3.5 h-3.5" />
-                          {room.sizeSqFt} sq ft
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-extrabold text-slate-900 dark:text-white tabular-nums">
+                          ₹{room.price.toLocaleString('en-IN')}
                         </span>
-                        <span aria-hidden="true">·</span>
-                        <span className="flex items-center gap-1">
-                          <Bed className="w-3.5 h-3.5" />
-                          {room.bedType}
-                        </span>
-                        <span aria-hidden="true">·</span>
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3.5 h-3.5" />
-                          Up to {room.maxOccupancy} Guests
+                        <span className="text-xs text-slate-400 line-through tabular-nums">
+                          ₹{room.originalPrice.toLocaleString('en-IN')}
                         </span>
                       </div>
-
-                      <h3 className="text-xl font-bold font-royal text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                        {room.name}
-                      </h3>
-                      <p className="text-xs text-amber-700 dark:text-amber-300/90 font-medium mt-0.5 mb-3">
-                        {room.tagline}
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        per night · excl. taxes
                       </p>
-
-                      <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
-                        {room.description}
-                      </p>
-
-                      {/* Amenities Snapshot */}
-                      <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
-                        {room.amenities.slice(0, 4).map((amenity, idx) => (
-                          <div key={idx} className="flex items-center gap-1.5 truncate">
-                            <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                            <span className="truncate">{amenity}</span>
-                          </div>
-                        ))}
-                      </div>
                     </div>
 
-                    {/* Price and CTA Actions */}
-                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
-                      <div>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-2xl font-extrabold text-slate-900 dark:text-white tabular-nums">
-                            ₹{room.price.toLocaleString('en-IN')}
-                          </span>
-                          <span className="text-xs text-slate-400 line-through tabular-nums">
-                            ₹{room.originalPrice.toLocaleString('en-IN')}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                          per night · excl. taxes
-                        </p>
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleOpenDetails(room)}
+                        type="button"
+                        className="px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <Info className="w-3.5 h-3.5" />
+                        <span>Details</span>
+                      </button>
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleOpenDetails(room)}
-                          type="button"
-                          className="px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
-                        >
-                          <Info className="w-3.5 h-3.5" />
-                          <span>Details</span>
-                        </button>
-
-                        <button
-                          onClick={() => handleBookClick(room)}
-                          type="button"
-                          className="px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-950 bg-amber-400 hover:bg-amber-300 active:scale-95 rounded-lg transition-all shadow-xs flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
-                        >
-                          <span>Reserve</span>
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleBookClick(room)}
+                        type="button"
+                        className="px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-950 bg-amber-400 hover:bg-amber-300 active:scale-95 rounded-lg transition-all shadow-xs flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+                      >
+                        <span>Reserve</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 </div>
-              ))}
+              </div>
+            ))}
         </div>
 
         {/* Room Details Modal */}

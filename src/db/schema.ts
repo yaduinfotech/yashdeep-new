@@ -95,25 +95,6 @@ export const guestFolios = pgTable('guest_folios', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
-export const banquetEvents = pgTable('banquet_events', {
-  id: serial('id').primaryKey(),
-  eventName: text('event_name').notNull(),
-  clientName: text('client_name').notNull(),
-  companyName: text('company_name'),
-  phone: text('phone').notNull(),
-  email: text('email').notNull(),
-  hallName: text('hall_name').notNull(), // 'Imperial Ballroom', 'Royal Boardroom', 'Palace Lawns'
-  eventDate: text('event_date').notNull(),
-  guestCount: integer('guest_count').notNull(),
-  cateringPackage: text('catering_package'),
-  totalAmount: integer('total_amount').notNull(),
-  advancePaid: integer('advance_paid').default(0),
-  balanceDue: integer('balance_due').notNull(),
-  status: text('status').default('confirmed'), // 'confirmed', 'tentative', 'completed', 'cancelled'
-  specialRequests: text('special_requests'),
-  createdAt: timestamp('created_at').defaultNow(),
-});
-
 export const newsletterSubscribers = pgTable('newsletter_subscribers', {
   id: serial('id').primaryKey(),
   email: text('email').notNull().unique(),

@@ -1,25 +1,22 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Room, BookingData, BookingAddOns, UserProfile, EmailNotification } from '../types/hotel';
-import { ROOMS_DATA } from '../data/hotelData';
+import { useHotelData } from '../context/HotelDataContext';
 import {
   X,
-  Calendar,
-  Users,
   CheckCircle2,
-  QrCode,
-  CreditCard,
   Printer,
   Share2,
-  Clock,
   ArrowRight,
   ArrowLeft,
-  Bed,
-  Sparkles,
-  Tag,
-  Gift,
   Mail,
   FileText,
   ExternalLink,
+  ShieldCheck,
+  Building,
+  CreditCard,
+  IdCard,
+  Phone,
+  MessageCircle,
 } from 'lucide-react';
 import { trackEvent } from '../utils/analytics';
 import { simulateBookingConfirmationEmail } from '../utils/emailService';
@@ -39,10 +36,30 @@ interface BookingModalProps {
   onBookingSuccess: (booking: BookingData) => void;
 }
 
+const fallbackRoom: Room = {
+  id: 'deluxe-room',
+  name: 'Deluxe Room',
+  tagline: 'King Bed, Modern Luxury',
+  category: 'deluxe',
+  price: 2200,
+  originalPrice: 3600,
+  sizeSqFt: 180,
+  bedType: '1 King Bed',
+  maxOccupancy: 2,
+  availableUnits: 4,
+  description: 'Deluxe Room opposite Honda Car Gate 4.',
+  image: '/src/assets/images/room_deluxe_king_1794500883485.jpg',
+  gallery: ['/src/assets/images/room_deluxe_king_1794500883485.jpg'],
+  rating: 4.8,
+  reviewsCount: 156,
+  amenities: ['High-Speed Wi-Fi', 'Complimentary Breakfast', 'Room Air Conditioner (AC)'],
+  isPopular: true,
+};
+
 export default function BookingModal({
   isOpen,
   onClose,
-  availableRooms = ROOMS_DATA,
+  availableRooms = [],
   initialRoom,
   initialCheckIn,
   initialCheckOut,
@@ -56,7 +73,7 @@ export default function BookingModal({
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [selectedRoom, setSelectedRoom] = useState<Room>(initialRoom || availableRooms[0] || ROOMS_DATA[0]);
+  const [selectedRoom, setSelectedRoom] = useState<Room>(initialRoom || availableRooms[0] || fallbackRoom);
   const [checkIn, setCheckIn] = useState(initialCheckIn || today);
   const [checkOut, setCheckOut] = useState(initialCheckOut || tomorrow);
   const [adultCount, setAdultCount] = useState(initialGuests || 2);
@@ -80,27 +97,84 @@ export default function BookingModal({
   const [gstNumber, setGstNumber] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
 
-  // Payment State
-  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card'>('upi');
-  const [upiId, setUpiId] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [paymentTimer, setPaymentTimer] = useState(180);
+  // Government ID Verification (Advance Reservation Requirement)
+  const [idProofType, setIdProofType] = useState<string>('Aadhaar Card');
+  const [idProofNumber, setIdProofNumber] = useState<string>('');
 
-  // Final Confirmed Booking & Email Notification
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Final Confirmed Booking & Notification
   const [confirmedBooking, setConfirmedBooking] = useState<BookingData | null>(null);
   const [emailNotification, setEmailNotification] = useState<EmailNotification | null>(null);
   const [isEmailPreviewOpen, setIsEmailPreviewOpen] = useState(false);
+
+  // Front Desk Direct-Call Assistance on Idle or Exit Intent
+  const { hotelInfo } = useHotelData();
+  const [showAssistance, setShowAssistance] = useState(false);
+  const [assistanceReason, setAssistanceReason] = useState<'idle' | 'exit_intent'>('idle');
+
+  // Inactivity / Hesitation & Exit Intent Detector
+  useEffect(() => {
+    if (!isOpen || step === 4 || confirmedBooking) {
+      setShowAssistance(false);
+      return;
+    }
+
+    let idleTimer: NodeJS.Timeout;
+    const startIdleTimer = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        setAssistanceReason('idle');
+        setShowAssistance(true);
+      }, 35000); // 35 seconds of staying on booking modal
+    };
+
+    startIdleTimer();
+
+    const handleActivity = () => {
+      if (!showAssistance) {
+        startIdleTimer();
+      }
+    };
+
+    window.addEventListener('mousemove', handleActivity, { passive: true });
+    window.addEventListener('keydown', handleActivity, { passive: true });
+    window.addEventListener('touchstart', handleActivity, { passive: true });
+
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 10 && step < 4 && !confirmedBooking) {
+        setAssistanceReason('exit_intent');
+        setShowAssistance(true);
+      }
+    };
+    document.addEventListener('mouseleave', handleMouseLeave);
+
+    return () => {
+      clearTimeout(idleTimer);
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, [isOpen, step, confirmedBooking, showAssistance]);
+
+  const handleAttemptClose = () => {
+    if (step >= 2 && !confirmedBooking && !showAssistance) {
+      setAssistanceReason('exit_intent');
+      setShowAssistance(true);
+    } else {
+      onClose();
+    }
+  };
 
   // Sync selected room if prop updates
   useEffect(() => {
     if (initialRoom) {
       setSelectedRoom(initialRoom);
+    } else if (availableRooms.length > 0 && selectedRoom.id === 'deluxe-room') {
+      setSelectedRoom(availableRooms[0]);
     }
-  }, [initialRoom]);
+  }, [initialRoom, availableRooms]);
 
   // Sync user info if signed in
   useEffect(() => {
@@ -119,17 +193,6 @@ export default function BookingModal({
       }
     }
   }, [initialBenefitCode]);
-
-  // UPI countdown timer
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (step === 3 && paymentMethod === 'upi' && paymentTimer > 0) {
-      interval = setInterval(() => {
-        setPaymentTimer((prev) => (prev > 0 ? prev - 1 : 0));
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [step, paymentMethod, paymentTimer]);
 
   if (!isOpen) return null;
 
@@ -151,18 +214,16 @@ export default function BookingModal({
   const earlyCheckInCost = addOns.earlyCheckIn && !isFreeEarlyCheckIn ? 600 : 0;
 
   const addOnsTotal = breakfastCost + transferCost + earlyCheckInCost;
-  const taxAmount = Math.round((roomRateTotal + addOnsTotal) * 0.12);
+  const taxAmount = Math.round((roomRateTotal + addOnsTotal) * 0.05); // Standard 5% GST
   const grandTotal = roomRateTotal + addOnsTotal + taxAmount;
 
-  // Step 1 -> Step 2 validation
   const handleProceedToGuestDetails = (e: React.FormEvent) => {
     e.preventDefault();
     trackEvent('booking_step1_complete', 'booking', `Room: ${selectedRoom.name}, Nights: ${calculatedNights}`);
     setStep(2);
   };
 
-  // Step 2 -> Step 3 validation
-  const handleProceedToPayment = (e: React.FormEvent) => {
+  const handleProceedToGuarantee = (e: React.FormEvent) => {
     e.preventDefault();
     if (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim()) {
       alert('Please fill in your Name, Email, and Phone Number.');
@@ -172,74 +233,71 @@ export default function BookingModal({
     setStep(3);
   };
 
-  // Final Payment Processing Simulator
-  const handleCompletePayment = () => {
-    setIsProcessingPayment(true);
-    trackEvent('booking_payment_started', 'booking', `Method: ${paymentMethod}, Total: ₹${grandTotal}`);
+  // Final Advance Reservation Confirmation
+  const handleConfirmAdvanceReservation = async () => {
+    if (!idProofNumber.trim()) {
+      alert('Please provide your Government ID Proof number for advance reservation confirmation.');
+      return;
+    }
 
-    setTimeout(() => {
-      setIsProcessingPayment(false);
-      const bookingRef = `YDP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    setIsSubmitting(true);
+    trackEvent('booking_submission_started', 'booking', `Total: ₹${grandTotal}`);
 
-      const newBooking: BookingData = {
-        id: `book-${Date.now()}`,
-        bookingReference: bookingRef,
-        roomId: selectedRoom.id,
-        roomName: selectedRoom.name,
-        checkIn,
-        checkOut,
-        nights: calculatedNights,
-        adultCount,
-        childCount,
-        guestName,
-        guestEmail,
-        guestPhone,
-        gstNumber: gstNumber.trim() || undefined,
-        specialRequests: specialRequests.trim() || undefined,
-        addOns,
-        roomRateTotal,
-        addOnsTotal,
-        taxAmount,
-        grandTotal,
-        paymentMethod,
-        paymentStatus: 'paid',
-        appliedRewardBenefit: benefitCode || undefined,
-        paymentDetails: {
-          upiId: paymentMethod === 'upi' ? (upiId || `${guestPhone}@upi`) : undefined,
-          cardLast4: paymentMethod === 'card' ? cardNumber.slice(-4) || '4242' : undefined,
-          transactionId: `TXN${Date.now()}`,
-        },
-        createdAt: new Date().toISOString(),
-      };
+    const bookingRef = `YDP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-      setConfirmedBooking(newBooking);
+    const newBooking: BookingData = {
+      id: `book-${Date.now()}`,
+      bookingReference: bookingRef,
+      roomId: selectedRoom.id,
+      roomName: selectedRoom.name,
+      checkIn,
+      checkOut,
+      nights: calculatedNights,
+      adultCount,
+      childCount,
+      guestName: guestName.trim(),
+      guestEmail: guestEmail.trim(),
+      guestPhone: guestPhone.trim(),
+      gstNumber: gstNumber.trim() || undefined,
+      specialRequests: specialRequests.trim() || undefined,
+      addOns,
+      roomRateTotal,
+      addOnsTotal,
+      taxAmount,
+      grandTotal,
+      paymentMethod: 'pay_at_hotel',
+      paymentStatus: 'pending',
+      stayStatus: 'confirmed',
+      idProofType,
+      idProofNumber: idProofNumber.trim(),
+      appliedRewardBenefit: benefitCode || undefined,
+      createdAt: new Date().toISOString(),
+    };
 
-      // Simulate sending booking confirmation email with PDF summary link
-      try {
-        const generatedEmail = simulateBookingConfirmationEmail(newBooking);
-        setEmailNotification(generatedEmail);
-      } catch (err) {
-        console.error('Email generation error:', err);
-      }
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newBooking),
+      });
+      const data = await res.json();
+      const confirmed = data.booking || newBooking;
+      setConfirmedBooking(confirmed);
 
-      onBookingSuccess(newBooking);
-      trackEvent('booking_confirmed', 'booking', `Ref: ${bookingRef}, Total: ₹${grandTotal}`);
+      const generatedEmail = simulateBookingConfirmationEmail(confirmed);
+      setEmailNotification(generatedEmail);
+
+      onBookingSuccess(confirmed);
+      trackEvent('booking_confirmed', 'booking', `Ref: ${confirmed.bookingReference}, Total: ₹${grandTotal}`);
       setStep(4);
-    }, 1500);
-  };
-
-  const handleCardNumberChange = (val: string) => {
-    const raw = val.replace(/\D/g, '').slice(0, 16);
-    const parts = raw.match(/.{1,4}/g);
-    setCardNumber(parts ? parts.join(' ') : raw);
-  };
-
-  const handleExpiryChange = (val: string) => {
-    const raw = val.replace(/\D/g, '').slice(0, 4);
-    if (raw.length >= 3) {
-      setCardExpiry(`${raw.slice(0, 2)}/${raw.slice(2)}`);
-    } else {
-      setCardExpiry(raw);
+    } catch (err) {
+      console.error('Error confirming advance reservation:', err);
+      // Fallback
+      setConfirmedBooking(newBooking);
+      onBookingSuccess(newBooking);
+      setStep(4);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -249,16 +307,16 @@ export default function BookingModal({
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60">
           <div className="flex items-center gap-3">
-            <span className="font-royal text-lg font-bold text-slate-900 dark:text-amber-400">
-              YASHDEEP PALACE
+            <span className="font-serif text-lg font-bold text-slate-900 dark:text-amber-400">
+              {hotelInfo.name?.toUpperCase() || 'YASHDEEP PALACE'}
             </span>
             <span className="text-slate-400" aria-hidden="true">|</span>
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-              Direct Booking Engine
+              Advance Reservation Engine
             </span>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleAttemptClose}
             type="button"
             className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors cursor-pointer"
           >
@@ -280,7 +338,7 @@ export default function BookingModal({
           <span className="text-slate-300 dark:text-slate-700">──</span>
           <div className={`flex items-center gap-1.5 font-medium ${step >= 3 ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-400'}`}>
             <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 3 ? 'bg-amber-400 text-slate-950 font-bold' : 'bg-slate-300 dark:bg-slate-700'}`}>3</span>
-            <span className="hidden sm:inline">Instant Pay</span>
+            <span className="hidden sm:inline">Verification & ID</span>
           </div>
           <span className="text-slate-300 dark:text-slate-700">──</span>
           <div className={`flex items-center gap-1.5 font-medium ${step === 4 ? 'text-emerald-500 font-bold' : 'text-slate-400'}`}>
@@ -295,11 +353,11 @@ export default function BookingModal({
           {step === 1 && (
             <form onSubmit={handleProceedToGuestDetails} className="space-y-6">
               <div>
-                <h3 className="text-xl font-bold font-royal text-slate-900 dark:text-white mb-1">
+                <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-white mb-1">
                   Select Dates & Room Category
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Best direct rate opposite Honda Car Gate 4 with high-speed optical Wi-Fi and valet parking.
+                  Best direct rate opposite Honda Car Gate 4 with high-speed optical Wi-Fi and secured parking.
                 </p>
               </div>
 
@@ -314,11 +372,10 @@ export default function BookingModal({
                       type="button"
                       key={r.id}
                       onClick={() => setSelectedRoom(r)}
-                      className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 cursor-pointer ${
-                        selectedRoom.id === r.id
-                          ? 'border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 ring-2 ring-amber-400/40'
-                          : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 bg-white dark:bg-slate-800/60'
-                      }`}
+                      className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 cursor-pointer ${selectedRoom.id === r.id
+                        ? 'border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 ring-2 ring-amber-400/40'
+                        : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 bg-white dark:bg-slate-800/60'
+                        }`}
                     >
                       <img
                         src={r.image}
@@ -350,11 +407,11 @@ export default function BookingModal({
                   </label>
                   <input
                     type="date"
+                    required
                     min={today}
                     value={checkIn}
                     onChange={(e) => setCheckIn(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"
-                    required
                   />
                 </div>
                 <div>
@@ -363,148 +420,111 @@ export default function BookingModal({
                   </label>
                   <input
                     type="date"
+                    required
                     min={checkIn || today}
                     value={checkOut}
                     onChange={(e) => setCheckOut(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"
-                    required
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                    Guests (Adults)
-                  </label>
-                  <select
-                    value={adultCount}
-                    onChange={(e) => setAdultCount(Number(e.target.value))}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"
-                  >
-                    <option value={1}>1 Adult (Solo Business)</option>
-                    <option value={2}>2 Adults</option>
-                    <option value={3}>3 Adults</option>
-                    <option value={4}>4 Adults</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                      Adults
+                    </label>
+                    <select
+                      value={adultCount}
+                      onChange={(e) => setAdultCount(Number(e.target.value))}
+                      className="w-full px-2.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"
+                    >
+                      {[1, 2, 3, 4].map((num) => (
+                        <option key={num} value={num}>
+                          {num} {num === 1 ? 'Adult' : 'Adults'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                      Children
+                    </label>
+                    <select
+                      value={childCount}
+                      onChange={(e) => setChildCount(Number(e.target.value))}
+                      className="w-full px-2.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"
+                    >
+                      {[0, 1, 2].map((num) => (
+                        <option key={num} value={num}>
+                          {num} Child
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              {/* Applied Benefit / Promo Code Input */}
-              <div className="p-3 bg-amber-50/70 dark:bg-amber-950/30 rounded-xl border border-amber-300/60 dark:border-amber-800/60 flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-amber-500 shrink-0" />
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
-                    Rewards Promo / Benefit Code:
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={benefitCode}
-                    onChange={(e) => {
-                      const val = e.target.value.toUpperCase();
-                      setBenefitCode(val);
-                      if (val.includes('10') || val === 'ROYAL15') {
-                        setAppliedDiscountPercent(val === 'ROYAL15' ? 15 : 10);
-                      } else {
-                        setAppliedDiscountPercent(0);
-                      }
-                    }}
-                    placeholder="Enter code"
-                    className="px-2.5 py-1 bg-white dark:bg-slate-900 border border-amber-400 rounded-md font-mono text-xs uppercase text-slate-900 dark:text-white"
-                  />
-                  {appliedDiscountPercent > 0 && (
-                    <span className="text-emerald-600 font-bold text-[11px]">
-                      {appliedDiscountPercent}% Applied!
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Add-ons Section */}
-              <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2.5">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Hospitality Add-ons
-                </p>
-
-                <label className="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer">
-                  <div className="flex items-center gap-3">
+              {/* Add-ons */}
+              <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  Hospitality Add-ons & Services
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <label className="flex items-center gap-2 p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-xs cursor-pointer">
                     <input
                       type="checkbox"
                       checked={addOns.breakfast}
                       onChange={(e) => setAddOns({ ...addOns, breakfast: e.target.checked })}
-                      className="w-4 h-4 text-amber-500 rounded"
+                      className="rounded text-amber-500 focus:ring-amber-400"
                     />
                     <div>
-                      <p className="text-xs font-bold text-slate-900 dark:text-white">
-                        Royal Multi-Cuisine Buffet Breakfast
-                      </p>
-                      <p className="text-[11px] text-slate-500">
-                        {isFreeBreakfast ? '★ Covered by your Yashdeep Rewards Benefit!' : 'Fresh morning bakery & South/North Indian live stations'}
-                      </p>
+                      <p className="font-semibold text-slate-900 dark:text-white">Royal Breakfast</p>
+                      <p className="text-[10px] text-slate-500">₹350/guest/day</p>
                     </div>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 tabular-nums">
-                    {isFreeBreakfast ? 'FREE (Redeemed)' : '+₹350 / guest / night'}
-                  </span>
-                </label>
+                  </label>
 
-                <label className="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer">
-                  <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-xs cursor-pointer">
                     <input
                       type="checkbox"
                       checked={addOns.earlyCheckIn}
                       onChange={(e) => setAddOns({ ...addOns, earlyCheckIn: e.target.checked })}
-                      className="w-4 h-4 text-amber-500 rounded"
+                      className="rounded text-amber-500 focus:ring-amber-400"
                     />
                     <div>
-                      <p className="text-xs font-bold text-slate-900 dark:text-white">
-                        Priority Early Check-in (from 10:00 AM)
-                      </p>
-                      <p className="text-[11px] text-slate-500">
-                        {isFreeEarlyCheckIn ? '★ Covered by your Yashdeep Rewards Privilege!' : 'Guaranteed early room blocking'}
-                      </p>
+                      <p className="font-semibold text-slate-900 dark:text-white">Early Check-In</p>
+                      <p className="text-[10px] text-slate-500">From 8:00 AM (+₹600)</p>
                     </div>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 tabular-nums">
-                    {isFreeEarlyCheckIn ? 'FREE (Redeemed)' : '+₹600 flat'}
-                  </span>
-                </label>
+                  </label>
+
+                  <label className="flex items-center gap-2 p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={addOns.airportTransfer}
+                      onChange={(e) => setAddOns({ ...addOns, airportTransfer: e.target.checked })}
+                      className="rounded text-amber-500 focus:ring-amber-400"
+                    />
+                    <div>
+                      <p className="font-semibold text-slate-900 dark:text-white">Airport Cab</p>
+                      <p className="text-[10px] text-slate-500">Delhi IGI T3 (+₹950)</p>
+                    </div>
+                  </label>
+                </div>
               </div>
 
-              {/* Price Calculation Summary Strip */}
-              <div className="bg-amber-50/60 dark:bg-amber-950/20 p-4 rounded-xl border border-amber-200/60 dark:border-amber-800/40 space-y-1.5 text-xs">
-                <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                  <span>
-                    {selectedRoom.name} ({calculatedNights} {calculatedNights === 1 ? 'night' : 'nights'} × ₹{selectedRoom.price.toLocaleString('en-IN')})
-                  </span>
-                  <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
-                    ₹{rawRoomTotal.toLocaleString('en-IN')}
-                  </span>
+              {/* Price summary */}
+              <div className="p-4 bg-amber-50/60 dark:bg-amber-950/20 rounded-xl border border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {calculatedNights} Night(s) · {selectedRoom.name}
+                  </p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">
+                    Estimated Total Tariff (Inc. 5% GST)
+                  </p>
                 </div>
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-emerald-600 font-semibold">
-                    <span>Yashdeep Rewards Privilege Discount ({appliedDiscountPercent}%)</span>
-                    <span className="tabular-nums">-₹{discountAmount.toLocaleString('en-IN')}</span>
-                  </div>
-                )}
-                {addOnsTotal > 0 && (
-                  <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                    <span>Hospitality Add-ons</span>
-                    <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
-                      +₹{addOnsTotal.toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                  <span>GST Taxes (12%)</span>
-                  <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
-                    +₹{taxAmount.toLocaleString('en-IN')}
-                  </span>
-                </div>
-                <div className="pt-2 border-t border-amber-200/80 dark:border-amber-800/80 flex justify-between items-baseline text-sm font-bold text-slate-900 dark:text-white">
-                  <span>Total Payable:</span>
-                  <span className="text-lg text-amber-600 dark:text-amber-400 tabular-nums">
+                <div className="text-right">
+                  <span className="text-xl font-extrabold text-amber-600 dark:text-amber-400 tabular-nums">
                     ₹{grandTotal.toLocaleString('en-IN')}
                   </span>
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">Pay at Check-In</p>
                 </div>
               </div>
 
@@ -520,62 +540,22 @@ export default function BookingModal({
             </form>
           )}
 
-          {/* STEP 2: GUEST DETAILS & GOOGLE SIGN-IN PROMPT */}
+          {/* STEP 2: GUEST DETAILS & CORPORATE BILLING */}
           {step === 2 && (
-            <form onSubmit={handleProceedToPayment} className="space-y-5">
+            <form onSubmit={handleProceedToGuarantee} className="space-y-6">
               <div>
-                <h3 className="text-xl font-bold font-royal text-slate-900 dark:text-white mb-1">
-                  Primary Guest Contact & Google Confirmation
+                <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-white mb-1">
+                  Primary Guest Contact & Corporate Billing
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Confirm your coordinates for the instant booking confirmation voucher and corporate invoice.
+                  Official confirmation voucher will be sent to your phone and email.
                 </p>
               </div>
-
-              {/* Google Sign-in One-Click Autofill Banner */}
-              {!currentUser ? (
-                <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                  <div className="space-y-0.5">
-                    <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-blue-500" />
-                      <span>Confirm Faster with Google</span>
-                    </p>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                      Auto-fills your details and earns +{(grandTotal * 0.1).toFixed(0)} points in Yashdeep Rewards.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={onGoogleSignIn}
-                    className="px-4 py-2 bg-white text-slate-700 font-bold text-xs rounded-lg border border-slate-300 shadow-xs flex items-center gap-2 shrink-0 cursor-pointer"
-                  >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                    </svg>
-                    <span>Google Sign-In</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="p-3 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="font-semibold text-emerald-900 dark:text-emerald-300">
-                      Confirmed via Google as {currentUser.name} ({currentUser.email})
-                    </span>
-                  </div>
-                  <span className="font-bold text-amber-600 dark:text-amber-400">
-                    +{(grandTotal * 0.1).toFixed(0)} PTS Accruing
-                  </span>
-                </div>
-              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Full Name *
+                    Primary Guest Full Name *
                   </label>
                   <input
                     type="text"
@@ -595,7 +575,7 @@ export default function BookingModal({
                     required
                     value={guestEmail}
                     onChange={(e) => setGuestEmail(e.target.value)}
-                    placeholder="rasu@example.com"
+                    placeholder="guest@example.com"
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"
                   />
                 </div>
@@ -604,7 +584,7 @@ export default function BookingModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Phone (WhatsApp) *
+                    Mobile Number (WhatsApp) *
                   </label>
                   <input
                     type="tel"
@@ -617,7 +597,7 @@ export default function BookingModal({
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Company GSTIN (For Corporate Billing)
+                    Company GSTIN (For Business Tax Credit)
                   </label>
                   <input
                     type="text"
@@ -637,7 +617,7 @@ export default function BookingModal({
                   rows={2}
                   value={specialRequests}
                   onChange={(e) => setSpecialRequests(e.target.value)}
-                  placeholder="e.g. Quiet floor room, late check-in from Honda plant audit..."
+                  placeholder="e.g. Quiet upper floor room, late check-in from Honda plant audit..."
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"
                 />
               </div>
@@ -655,224 +635,138 @@ export default function BookingModal({
                   type="submit"
                   className="px-6 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center gap-2 cursor-pointer"
                 >
-                  <span>Proceed to Payment</span>
+                  <span>Proceed to Verification</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </form>
           )}
 
-          {/* STEP 3: PAYMENT (UPI & CARDS) */}
+          {/* STEP 3: GUARANTEE & GOVERNMENT ID PROOF VERIFICATION */}
           {step === 3 && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-xl font-bold font-royal text-slate-900 dark:text-white mb-1">
-                  Secure Checkout & Instant Confirmation
+                <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-white mb-1">
+                  Advance Reservation Guarantee & ID Verification
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Select payment gateway. 256-Bit SSL Encrypted.
+                  Zero advance prepayment required. Confirm your reservation with valid government photo ID details and settle bill during Front Desk check-in.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('upi')}
-                  className={`p-3.5 rounded-xl border flex items-center justify-center gap-2.5 text-xs font-bold transition-all cursor-pointer ${
-                    paymentMethod === 'upi'
-                      ? 'border-amber-400 bg-amber-50/70 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 ring-2 ring-amber-400/40'
-                      : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  <QrCode className="w-4 h-4" />
-                  <span>Instant UPI QR</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('card')}
-                  className={`p-3.5 rounded-xl border flex items-center justify-center gap-2.5 text-xs font-bold transition-all cursor-pointer ${
-                    paymentMethod === 'card'
-                      ? 'border-amber-400 bg-amber-50/70 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 ring-2 ring-amber-400/40'
-                      : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  <CreditCard className="w-4 h-4" />
-                  <span>Credit / Debit Card</span>
-                </button>
+              {/* Pay-at-Hotel Guarantee Box */}
+              <div className="p-4 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                <div className="text-xs">
+                  <p className="font-bold text-emerald-950 dark:text-emerald-200">
+                    Official Pay-at-Check-In Guarantee
+                  </p>
+                  <p className="text-slate-600 dark:text-slate-400 mt-0.5">
+                    Your room category is 100% reserved in hotel inventory. Payment (Cash, UPI, Credit Card, or Corporate Bill-to-Company)
+                    is settled upon physical arrival at the front desk.
+                  </p>
+                </div>
               </div>
 
-              {/* UPI View */}
-              {paymentMethod === 'upi' && (
-                <div className="p-5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-center space-y-4">
-                  <div className="inline-flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-900/30 px-3 py-1 rounded-full font-medium">
-                    <Clock className="w-3.5 h-3.5 animate-spin" />
-                    <span>
-                      QR Valid for: {Math.floor(paymentTimer / 60)}:
-                      {(paymentTimer % 60).toString().padStart(2, '0')} min
-                    </span>
-                  </div>
-
-                  <div className="w-44 h-44 mx-auto bg-white p-3 rounded-xl border border-slate-300 shadow-sm flex flex-col items-center justify-center">
-                    <svg viewBox="0 0 100 100" className="w-full h-full text-slate-900" fill="currentColor">
-                      <rect x="5" y="5" width="25" height="25" rx="3" fill="#0B0F19" />
-                      <rect x="10" y="10" width="15" height="15" fill="#FFFFFF" />
-                      <rect x="13" y="13" width="9" height="9" fill="#0B0F19" />
-                      <rect x="70" y="5" width="25" height="25" rx="3" fill="#0B0F19" />
-                      <rect x="75" y="10" width="15" height="15" fill="#FFFFFF" />
-                      <rect x="78" y="13" width="9" height="9" fill="#0B0F19" />
-                      <rect x="5" y="70" width="25" height="25" rx="3" fill="#0B0F19" />
-                      <rect x="10" y="75" width="15" height="15" fill="#FFFFFF" />
-                      <rect x="13" y="78" width="9" height="9" fill="#0B0F19" />
-                      <rect x="35" y="10" width="8" height="8" fill="#D4AF37" />
-                      <rect x="48" y="10" width="8" height="8" fill="#0B0F19" />
-                      <rect x="40" y="40" width="8" height="8" fill="#D4AF37" />
-                      <rect x="70" y="40" width="8" height="8" fill="#0B0F19" />
-                      <rect x="40" y="70" width="8" height="8" fill="#D4AF37" />
-                      <rect x="70" y="70" width="8" height="8" fill="#0B0F19" />
-                    </svg>
-                    <p className="text-[10px] text-slate-500 mt-1 font-mono">yashdeeppalace@icici</p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                      Scan with Google Pay, PhonePe, Paytm, or BHIM
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      Amount: <span className="font-bold text-amber-600 dark:text-amber-400">₹{grandTotal.toLocaleString('en-IN')}</span>
-                    </p>
-                  </div>
-
-                  <div className="pt-2">
-                    <button
-                      type="button"
-                      disabled={isProcessingPayment}
-                      onClick={handleCompletePayment}
-                      className="w-full py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                    >
-                      {isProcessingPayment ? (
-                        <>
-                          <Clock className="w-4 h-4 animate-spin" />
-                          <span>Verifying UPI Gateway Transaction...</span>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>Simulate UPI Payment Received</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
+              {/* Government ID Verification Fields */}
+              <div className="space-y-4 p-5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white mb-1">
+                  <IdCard className="w-4 h-4 text-amber-500" />
+                  <span>Mandatory Guest ID Verification</span>
                 </div>
-              )}
 
-              {/* Card View */}
-              {paymentMethod === 'card' && (
-                <div className="space-y-4 p-5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Card Number
+                      Government ID Proof Type *
                     </label>
-                    <input
-                      type="text"
-                      maxLength={19}
-                      placeholder="4532 8901 2345 6789"
-                      value={cardNumber}
-                      onChange={(e) => handleCardNumberChange(e.target.value)}
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-mono tracking-wider text-slate-900 dark:text-white"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        Expiry Date
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={5}
-                        placeholder="MM/YY"
-                        value={cardExpiry}
-                        onChange={(e) => handleExpiryChange(e.target.value)}
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-mono text-slate-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        CVV
-                      </label>
-                      <input
-                        type="password"
-                        maxLength={4}
-                        placeholder="•••"
-                        value={cardCvv}
-                        onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))}
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-mono text-slate-900 dark:text-white"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Cardholder Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Name on card"
-                      value={cardName}
-                      onChange={(e) => setCardName(e.target.value)}
+                    <select
+                      value={idProofType}
+                      onChange={(e) => setIdProofType(e.target.value)}
                       className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"
-                    />
+                    >
+                      <option value="Aadhaar Card">Aadhaar Card (UIDAI)</option>
+                      <option value="Passport">Passport (International / Domestic)</option>
+                      <option value="Driving License">Driving License</option>
+                      <option value="Voter ID">Voter ID Card</option>
+                      <option value="Corporate Badge">Corporate Employee ID (Honda / Vendor)</option>
+                    </select>
                   </div>
 
-                  <div className="pt-2">
-                    <button
-                      type="button"
-                      disabled={isProcessingPayment}
-                      onClick={handleCompletePayment}
-                      className="w-full py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                    >
-                      {isProcessingPayment ? (
-                        <>
-                          <Clock className="w-4 h-4 animate-spin" />
-                          <span>Authorizing Card Payment...</span>
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard className="w-4 h-4" />
-                          <span>Pay ₹{grandTotal.toLocaleString('en-IN')} Securely</span>
-                        </>
-                      )}
-                    </button>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      ID Proof / Document Number *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={idProofNumber}
+                      onChange={(e) => setIdProofNumber(e.target.value)}
+                      placeholder="e.g. 5489 1234 5678 or L9876543"
+                      className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-mono text-slate-900 dark:text-white"
+                    />
                   </div>
                 </div>
-              )}
+
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Physical photo ID must be presented for mandatory police verification during front desk check-in.
+                </p>
+              </div>
+
+              {/* Price summary */}
+              <div className="p-4 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs">
+                <div>
+                  <p className="font-semibold text-slate-900 dark:text-white">Amount Due at Front Desk Check-in:</p>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    Includes {selectedRoom.name} ({calculatedNights} nights) + Add-ons + 5% GST
+                  </p>
+                </div>
+                <span className="text-lg font-extrabold text-amber-600 dark:text-amber-400 tabular-nums">
+                  ₹{grandTotal.toLocaleString('en-IN')}
+                </span>
+              </div>
 
               <div className="flex items-center justify-between pt-2">
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 cursor-pointer"
+                  className="px-4 py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Back</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isSubmitting || !idProofNumber.trim()}
+                  onClick={handleConfirmAdvanceReservation}
+                  className="px-6 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <span>Registering Reservation...</span>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Confirm Advance Reservation</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 4: CONFIRMED BOOKING */}
+          {/* STEP 4: CONFIRMED BOOKING & OFFICIAL VOUCHER */}
           {step === 4 && confirmedBooking && (
             <div className="space-y-6 animate-in zoom-in-95 duration-300">
               <div className="text-center space-y-2">
                 <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-950/60 rounded-full flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <h3 className="text-2xl font-bold font-royal text-slate-900 dark:text-white">
-                  Reservation Confirmed!
+                <h3 className="text-2xl font-bold font-serif text-slate-900 dark:text-white">
+                  Advance Reservation Confirmed!
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Your stay at YashDeep Palace is booked. A confirmation has been sent to{' '}
+                  Your accommodation at YashDeep Palace is reserved. Official stay details dispatched to{' '}
                   <span className="font-semibold text-slate-900 dark:text-white">{confirmedBooking.guestEmail}</span>.
                 </p>
               </div>
@@ -886,46 +780,46 @@ export default function BookingModal({
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] uppercase font-bold text-slate-400">Status</p>
+                    <p className="text-[10px] uppercase font-bold text-slate-400">Payment Status</p>
                     <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Paid & Confirmed
+                      <ShieldCheck className="w-3.5 h-3.5" /> Pay at Check-In
                     </span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 text-xs">
                   <div>
-                    <p className="text-slate-400">Guest Name:</p>
+                    <p className="text-slate-400">Primary Guest:</p>
                     <p className="font-bold text-slate-900 dark:text-white">{confirmedBooking.guestName}</p>
                   </div>
                   <div>
-                    <p className="text-slate-400">Phone:</p>
+                    <p className="text-slate-400">Phone / WhatsApp:</p>
                     <p className="font-bold text-slate-900 dark:text-white">{confirmedBooking.guestPhone}</p>
                   </div>
                   <div>
-                    <p className="text-slate-400">Check-in:</p>
-                    <p className="font-bold text-slate-900 dark:text-white">{confirmedBooking.checkIn} (from 2 PM)</p>
+                    <p className="text-slate-400">Check-In Date:</p>
+                    <p className="font-bold text-slate-900 dark:text-white">{confirmedBooking.checkIn} (from 12:00 PM)</p>
                   </div>
                   <div>
-                    <p className="text-slate-400">Check-out:</p>
-                    <p className="font-bold text-slate-900 dark:text-white">{confirmedBooking.checkOut} (by 11 AM)</p>
+                    <p className="text-slate-400">Check-Out Date:</p>
+                    <p className="font-bold text-slate-900 dark:text-white">{confirmedBooking.checkOut} (by 11:00 AM)</p>
                   </div>
                   <div>
-                    <p className="text-slate-400">Room:</p>
+                    <p className="text-slate-400">Reserved Room:</p>
                     <p className="font-bold text-slate-900 dark:text-white">{confirmedBooking.roomName}</p>
                   </div>
                   <div>
-                    <p className="text-slate-400">Duration & Occupancy:</p>
+                    <p className="text-slate-400">Recorded ID Proof:</p>
                     <p className="font-bold text-slate-900 dark:text-white">
-                      {confirmedBooking.nights} Night(s) · {confirmedBooking.adultCount} Adult(s)
+                      {confirmedBooking.idProofType || 'Govt ID'} ({confirmedBooking.idProofNumber || 'On Record'})
                     </p>
                   </div>
                 </div>
 
                 <div className="pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-between items-baseline">
                   <div>
-                    <p className="text-xs font-bold text-slate-900 dark:text-white">Total Amount Paid</p>
-                    <p className="text-[10px] text-slate-400">Via {confirmedBooking.paymentMethod.toUpperCase()} · Txn {confirmedBooking.paymentDetails?.transactionId}</p>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">Total Stay Tariff</p>
+                    <p className="text-[10px] text-slate-400">Payable during front desk check-in</p>
                   </div>
                   <span className="text-lg font-extrabold text-amber-600 dark:text-amber-400 tabular-nums">
                     ₹{confirmedBooking.grandTotal.toLocaleString('en-IN')}
@@ -933,30 +827,22 @@ export default function BookingModal({
                 </div>
               </div>
 
-              {/* Simulated Booking Confirmation Email Notification Card */}
+              {/* Official Voucher Actions */}
               <div className="p-4 rounded-xl border border-amber-300 dark:border-amber-800/80 bg-amber-50/70 dark:bg-amber-950/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                 <div className="flex items-start gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 mt-0.5">
-                    <Mail className="w-4 h-4" />
+                    <FileText className="w-4 h-4" />
                   </div>
                   <div>
                     <p className="font-bold text-slate-900 dark:text-white">
-                      Confirmation Email Dispatched to {confirmedBooking.guestEmail}
+                      Official Tax Invoice & PDF Voucher Ready
                     </p>
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                      Includes verified reservation details and official PDF summary voucher download link.
+                      Download or print your stay voucher for front desk check-in and corporate accounting.
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setIsEmailPreviewOpen(true)}
-                    className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white font-bold text-xs rounded-lg shadow-xs hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Mail className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Preview Email</span>
-                  </button>
                   <a
                     href={`/api/bookings/${confirmedBooking.bookingReference}/pdf-summary`}
                     target="_blank"
@@ -964,7 +850,7 @@ export default function BookingModal({
                     className="px-3 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-lg shadow-xs flex items-center gap-1.5 cursor-pointer"
                   >
                     <FileText className="w-3.5 h-3.5" />
-                    <span>PDF Voucher</span>
+                    <span>Download PDF Voucher</span>
                     <ExternalLink className="w-3 h-3 opacity-70" />
                   </a>
                 </div>
@@ -977,12 +863,12 @@ export default function BookingModal({
                   className="py-2.5 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Printer className="w-4 h-4" />
-                  <span>Print Voucher / PDF</span>
+                  <span>Print Voucher</span>
                 </button>
 
                 <a
                   href={`https://wa.me/918222020699?text=${encodeURIComponent(
-                    `Hello YashDeep Palace, my stay booking is confirmed! Reference: ${confirmedBooking.bookingReference}, Guest: ${confirmedBooking.guestName}, Check-in: ${confirmedBooking.checkIn}`
+                    `Hello YashDeep Palace, my advance stay is confirmed! Reference: ${confirmedBooking.bookingReference}, Guest: ${confirmedBooking.guestName}, Check-in: ${confirmedBooking.checkIn}`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -1007,12 +893,80 @@ export default function BookingModal({
         </div>
       </div>
 
-      {/* Simulated Booking Confirmation Email Preview Modal */}
+      {/* Confirmation Email Preview Modal */}
       <EmailPreviewModal
         isOpen={isEmailPreviewOpen}
         onClose={() => setIsEmailPreviewOpen(false)}
         email={emailNotification}
       />
+
+      {/* Front Desk Immediate Assistance Trigger (Idle / Hesitation or Exit-Intent) */}
+      {showAssistance && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 border border-amber-400/40 shadow-2xl space-y-5 text-center relative">
+            <button
+              onClick={() => {
+                setShowAssistance(false);
+                if (assistanceReason === 'exit_intent') onClose();
+              }}
+              type="button"
+              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-14 h-14 rounded-full bg-amber-400/15 text-amber-500 mx-auto flex items-center justify-center">
+              <Phone className="w-7 h-7 animate-bounce" />
+            </div>
+
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Front Desk Duty Manager Online 24/7
+              </div>
+              <h3 className="text-xl font-bold font-royal text-slate-900 dark:text-white">
+                {assistanceReason === 'exit_intent' ? 'Leaving So Soon?' : 'Need Help Choosing a Room?'}
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Skip filling forms! Call our Front Desk Duty Manager directly for instant room confirmation, corporate tariffs, or customized check-in requests.
+              </p>
+            </div>
+
+            <div className="space-y-2.5 pt-2">
+              <a
+                href={`tel:${hotelInfo.phone || '+918222020699'}`}
+                className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm shadow-md transition-all cursor-pointer"
+              >
+                <Phone className="w-4 h-4" />
+                <span>Call Front Desk ({hotelInfo.phone || '+91 82220 20699'})</span>
+              </a>
+
+              <a
+                href={`https://wa.me/${(hotelInfo.phone || '918222020699').replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${hotelInfo.name || 'Yashdeep Palace'} Front Desk, I am booking a room and would like instant assistance.`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Chat with Duty Manager on WhatsApp</span>
+              </a>
+
+              <button
+                onClick={() => {
+                  setShowAssistance(false);
+                  if (assistanceReason === 'exit_intent') {
+                    onClose();
+                  }
+                }}
+                type="button"
+                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline pt-1 cursor-pointer"
+              >
+                {assistanceReason === 'exit_intent' ? 'Close & Leave Anyway' : 'Continue Online Reservation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

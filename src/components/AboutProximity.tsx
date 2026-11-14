@@ -1,11 +1,13 @@
 import { MapPin, Building2, Car, Compass, ShieldCheck, Phone, CalendarCheck } from 'lucide-react';
-import { HOTEL_INFO } from '../data/hotelData';
+import { useHotelData } from '../context/HotelDataContext';
 
 interface AboutProximityProps {
   onOpenBooking: () => void;
 }
 
 export default function AboutProximity({ onOpenBooking }: AboutProximityProps) {
+  const { hotelInfo } = useHotelData();
+
   const proximityDistances = [
     {
       landmark: 'Honda Car India Plant (Gate No. 4)',
@@ -60,8 +62,8 @@ export default function AboutProximity({ onOpenBooking }: AboutProximityProps) {
 
             <p className="text-sm text-slate-400 leading-relaxed">
               Designed to meet international executive hospitality standards, our hotel combines acoustic-insulated
-              bedrooms, high-speed 150 Mbps optical fiber Wi-Fi, and 24-hour in-room dining with opulent banqueting spaces
-              tailored for corporate annual summits and regal Rajasthani weddings.
+              bedrooms, high-speed optical fiber Wi-Fi, and in-room dining with meeting spaces
+              tailored for corporate summits and functions.
             </p>
 
             {/* Corporate Delegate Perks Grid */}
@@ -79,10 +81,10 @@ export default function AboutProximity({ onOpenBooking }: AboutProximityProps) {
               <div className="p-3.5 bg-slate-800/80 rounded-xl border border-slate-700/80 space-y-1">
                 <div className="flex items-center gap-2 text-amber-400 font-bold text-xs">
                   <Car className="w-4 h-4" />
-                  <span>Secure Valet & EV Charging</span>
+                  <span>Secure Parking</span>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Ample gated parking for 200+ vehicles with 24/7 CCTV surveillance and EV charging.
+                  Ample gated parking for 20+ vehicles with 24/7 CCTV surveillance.
                 </p>
               </div>
             </div>
@@ -99,11 +101,11 @@ export default function AboutProximity({ onOpenBooking }: AboutProximityProps) {
               </button>
 
               <a
-                href={`tel:${HOTEL_INFO.phone}`}
+                href={`tel:${hotelInfo.phone}`}
                 className="px-5 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-semibold text-xs rounded-xl border border-slate-700 transition-colors flex items-center gap-2"
               >
                 <Phone className="w-4 h-4 text-amber-400" />
-                <span>Call Front Desk (+91 82220 20699)</span>
+                <span>Call Front Desk ({hotelInfo.phone})</span>
               </a>
             </div>
           </div>
@@ -134,7 +136,7 @@ export default function AboutProximity({ onOpenBooking }: AboutProximityProps) {
 
             <div className="pt-4 border-t border-slate-800 text-[11px] text-slate-400 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Official Address: Opposite Honda Car Gate No. 4, RA 403, Karuli Industrial Area, Khuskheda, Tapukrah, Rajasthan 301707</span>
+              <span>Official Address: {hotelInfo.address}</span>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Room, BookingData } from '../types/hotel';
+import { getOfflineKeyValue, setOfflineKeyValue } from '../utils/offlineSqlite';
 import {
   X,
   Lock,
@@ -40,9 +41,15 @@ export default function OwnerPortalModal({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState(false);
-  const [masterPin, setMasterPin] = useState(() => {
-    return localStorage.getItem('ydp_owner_pin') || '8222';
-  });
+  const [masterPin, setMasterPin] = useState('8222');
+
+  useEffect(() => {
+    getOfflineKeyValue<string>('ydp_owner_pin')
+      .then((val) => {
+        if (val) setMasterPin(val);
+      })
+      .catch(() => {});
+  }, []);
 
   const [activeTab, setActiveTab] = useState<'rooms' | 'bookings' | 'settings'>('rooms');
 
@@ -280,11 +287,10 @@ export default function OwnerPortalModal({
                     setActiveTab('rooms');
                     setIsAddingRoom(false);
                   }}
-                  className={`pb-3 border-b-2 transition-colors cursor-pointer ${
-                    activeTab === 'rooms'
+                  className={`pb-3 border-b-2 transition-colors cursor-pointer ${activeTab === 'rooms'
                       ? 'border-amber-400 text-amber-600 dark:text-amber-400 font-bold'
                       : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                  }`}
+                    }`}
                 >
                   Room Inventory & Rates ({rooms.length})
                 </button>
@@ -294,11 +300,10 @@ export default function OwnerPortalModal({
                     setActiveTab('bookings');
                     setIsAddingRoom(false);
                   }}
-                  className={`pb-3 border-b-2 transition-colors cursor-pointer ${
-                    activeTab === 'bookings'
+                  className={`pb-3 border-b-2 transition-colors cursor-pointer ${activeTab === 'bookings'
                       ? 'border-amber-400 text-amber-600 dark:text-amber-400 font-bold'
                       : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                  }`}
+                    }`}
                 >
                   Guest Bookings ({bookings.length})
                 </button>
@@ -308,11 +313,10 @@ export default function OwnerPortalModal({
                     setActiveTab('settings');
                     setIsAddingRoom(false);
                   }}
-                  className={`pb-3 border-b-2 transition-colors cursor-pointer ${
-                    activeTab === 'settings'
+                  className={`pb-3 border-b-2 transition-colors cursor-pointer ${activeTab === 'settings'
                       ? 'border-amber-400 text-amber-600 dark:text-amber-400 font-bold'
                       : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                  }`}
+                    }`}
                 >
                   Property PIN & Settings
                 </button>
@@ -612,11 +616,10 @@ export default function OwnerPortalModal({
                               <button
                                 type="button"
                                 onClick={() => handleToggleRoomAvailability(room.id)}
-                                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
-                                  room.isAvailable === false
+                                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${room.isAvailable === false
                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
                                     : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                                }`}
+                                  }`}
                                 title="Toggle Available / Sold Out status"
                               >
                                 {room.isAvailable === false ? 'Mark Available' : 'Mark Sold Out'}
@@ -652,7 +655,7 @@ export default function OwnerPortalModal({
               {activeTab === 'bookings' && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-xs text-slate-500">
-                    <span>Manage customer bookings made via instant UPI & Card checkout:</span>
+                    <span>Manage customer bookings made via UPI & Card checkout:</span>
                     <span>Total Bookings: {bookings.length}</span>
                   </div>
 
@@ -723,7 +726,7 @@ export default function OwnerPortalModal({
                           const val = e.target.value;
                           if (val.length >= 4) {
                             setMasterPin(val);
-                            localStorage.setItem('ydp_owner_pin', val);
+                            setOfflineKeyValue('ydp_owner_pin', val);
                           }
                         }}
                         className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono"

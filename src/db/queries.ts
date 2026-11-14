@@ -1,5 +1,5 @@
 import { db } from './index.ts';
-import { rooms, bookings, users, newsletterSubscribers, managerUsers, physicalRooms, guestFolios, banquetEvents } from './schema.ts';
+import { rooms, bookings, users, newsletterSubscribers, managerUsers, physicalRooms, guestFolios } from './schema.ts';
 import { eq, desc, asc } from 'drizzle-orm';
 
 export async function getRoomsFromDb() {
@@ -22,8 +22,8 @@ export async function upsertRoomInDb(roomData: any) {
     const amenitiesJson = Array.isArray(roomData.amenities)
       ? JSON.stringify(roomData.amenities)
       : typeof roomData.amenities === 'string'
-      ? roomData.amenities
-      : '[]';
+        ? roomData.amenities
+        : '[]';
 
     return await db
       .insert(rooms)
@@ -309,44 +309,6 @@ export async function addGuestFolioItemInDb(data: {
     throw new Error('Failed to record folio entry in database', { cause: error });
   }
 }
-
-export async function getBanquetEventsFromDb() {
-  try {
-    return await db.select().from(banquetEvents).orderBy(desc(banquetEvents.createdAt));
-  } catch (error) {
-    console.error('Failed to get banquet events:', error);
-    throw new Error('Failed to query banquet events', { cause: error });
-  }
-}
-
-export async function createBanquetEventInDb(data: any) {
-  try {
-    const [event] = await db
-      .insert(banquetEvents)
-      .values({
-        eventName: data.eventName,
-        clientName: data.clientName,
-        companyName: data.companyName || null,
-        phone: data.phone,
-        email: data.email,
-        hallName: data.hallName,
-        eventDate: data.eventDate,
-        guestCount: Number(data.guestCount),
-        cateringPackage: data.cateringPackage || null,
-        totalAmount: Number(data.totalAmount),
-        advancePaid: Number(data.advancePaid || 0),
-        balanceDue: Number(data.totalAmount) - Number(data.advancePaid || 0),
-        status: data.status || 'confirmed',
-        specialRequests: data.specialRequests || null,
-      })
-      .returning();
-    return event;
-  } catch (error) {
-    console.error('Failed to create banquet event in SQL:', error);
-    throw new Error('Failed to create banquet event in database', { cause: error });
-  }
-}
-
 export async function subscribeNewsletterInDb(email: string) {
   try {
     return await db

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Menu, X, Moon, Sun, CalendarCheck, Shield, Crown } from 'lucide-react';
 import { UserProfile } from '../types/hotel';
+import { useHotelData } from '../context/HotelDataContext';
 
 interface NavbarProps {
   onOpenBooking: () => void;
@@ -19,6 +20,7 @@ export default function Navbar({
   onOpenRewards,
   onOpenOwnerPortal,
 }: NavbarProps) {
+  const { hotelInfo } = useHotelData();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -30,7 +32,7 @@ export default function Navbar({
             href="/"
             className="font-royal text-xl sm:text-2xl font-bold tracking-wider text-slate-900 dark:text-amber-300 whitespace-nowrap shrink-0 transition-colors"
           >
-            YASHDEEP PALACE
+            {hotelInfo.name?.toUpperCase() || 'YASHDEEP PALACE'}
           </a>
 
           {/* Zone 2: Clean single-line text navigation links */}
@@ -39,31 +41,31 @@ export default function Navbar({
               href="#rooms"
               className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors whitespace-nowrap shrink-0"
             >
-              Rooms & Suites
+              Rooms
             </a>
             <a
               href="#dining"
               className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors whitespace-nowrap shrink-0"
             >
-              Dining & Banquets
+              Dining
             </a>
             <a
               href="#about"
               className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors whitespace-nowrap shrink-0"
             >
-              About & Proximity
+              About Us
             </a>
             <a
               href="#gallery"
               className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors whitespace-nowrap shrink-0"
             >
-              Guest Gallery
+              Gallery
             </a>
             <a
               href="#contact"
               className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors whitespace-nowrap shrink-0"
             >
-              Location & Contact
+              Contact Us
             </a>
           </nav>
 
@@ -139,35 +141,35 @@ export default function Navbar({
             onClick={() => setMobileMenuOpen(false)}
             className="block py-2 text-base font-medium text-slate-800 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400"
           >
-            Rooms & Suites
+            Rooms
           </a>
           <a
             href="#dining"
             onClick={() => setMobileMenuOpen(false)}
             className="block py-2 text-base font-medium text-slate-800 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400"
           >
-            Dining & Banquets
+            Dining
           </a>
           <a
             href="#about"
             onClick={() => setMobileMenuOpen(false)}
             className="block py-2 text-base font-medium text-slate-800 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400"
           >
-            About & Honda Car Proximity
+            About Us
           </a>
           <a
             href="#gallery"
             onClick={() => setMobileMenuOpen(false)}
             className="block py-2 text-base font-medium text-slate-800 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400"
           >
-            Guest Gallery
+            Gallery
           </a>
           <a
             href="#contact"
             onClick={() => setMobileMenuOpen(false)}
             className="block py-2 text-base font-medium text-slate-800 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400"
           >
-            Location & Driving Directions
+            Contact Us
           </a>
 
           <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-2">
@@ -179,9 +181,9 @@ export default function Navbar({
               type="button"
               className="w-full py-2.5 text-center text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 rounded-lg border border-amber-300/40"
             >
-              👑 Yashdeep Rewards & Points ({currentUser?.points || 0} PTS)
+              👑 Rewards & Points ({currentUser?.points || 0} PTS)
             </button>
-            <button
+            {/* <button
               onClick={() => {
                 setMobileMenuOpen(false);
                 onOpenOwnerPortal();
@@ -190,7 +192,7 @@ export default function Navbar({
               className="w-full py-2.5 text-center text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg"
             >
               🛡️ Owner / Manager Portal (CMS & Rates)
-            </button>
+            </button> */}
           </div>
         </div>
       )}

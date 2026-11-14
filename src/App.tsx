@@ -5,12 +5,12 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
-import NetworkSimulatorBar from './components/NetworkSimulatorBar';
 import Hero from './components/Hero';
 import RoomCatalog from './components/RoomCatalog';
 import AboutProximity from './components/AboutProximity';
-import DiningAndBanquets from './components/DiningAndBanquets';
+import Dining from './components/Dining';
 import InteractiveGallery from './components/InteractiveGallery';
+import AeoKnowledgeFaq from './components/AeoKnowledgeFaq';
 import ReviewsSection from './components/ReviewsSection';
 import NewsletterRetention from './components/NewsletterRetention';
 import Footer from './components/Footer';
@@ -20,48 +20,35 @@ import AnalyticsDrawer from './components/AnalyticsDrawer';
 import RewardsDashboardModal from './components/RewardsDashboardModal';
 import HotelManagementSystem from './components/manager/HotelManagementSystem';
 import { Room, BookingData, UserProfile } from './types/hotel';
-import { ROOMS_DATA } from './data/hotelData';
-import { INITIAL_GOOGLE_USER } from './data/rewardsData';
+import { HotelDataProvider, useHotelData } from './context/HotelDataContext';
 import { trackEvent } from './utils/analytics';
+import { auth, googleAuthProvider } from './lib/firebase';
+import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
 import { Ticket, Crown } from 'lucide-react';
+import {
+  getOfflineKeyValue,
+  setOfflineKeyValue,
+  deleteOfflineKeyValue,
+} from './utils/offlineSqlite';
 
 export default function App() {
+  return (
+    <HotelDataProvider>
+      <AppContent />
+    </HotelDataProvider>
+  );
+}
+
+function AppContent() {
+  const { rooms, updateRoom } = useHotelData();
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isSimulatingSlowNetwork, setIsSimulatingSlowNetwork] = useState(false);
   const [isCatalogLoading, setIsCatalogLoading] = useState(false);
 
-  // Dynamic Hotel Room Inventory (Owner Managed CMS)
-  const [rooms, setRooms] = useState<Room[]>(() => {
-    try {
-      const stored = localStorage.getItem('ydp_rooms_inventory');
-      if (stored) return JSON.parse(stored);
-    } catch {
-      // fallback
-    }
-    return ROOMS_DATA;
-  });
+  // Confirmed Customer Bookings (stored in SQLite)
+  const [userBookings, setUserBookings] = useState<BookingData[]>([]);
 
-  // Confirmed Customer Bookings
-  const [userBookings, setUserBookings] = useState<BookingData[]>(() => {
-    try {
-      const stored = localStorage.getItem('ydp_confirmed_bookings');
-      if (stored) return JSON.parse(stored);
-    } catch {
-      // fallback
-    }
-    return [];
-  });
-
-  // Google User & Yashdeep Rewards Loyalty State
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
-    try {
-      const stored = localStorage.getItem('ydp_google_user');
-      if (stored) return JSON.parse(stored);
-    } catch {
-      // fallback
-    }
-    return null;
-  });
+  // Authenticated User Profile (stored in SQLite)
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
   // Modals
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -86,39 +73,64 @@ export default function App() {
     }
   }, [isDarkMode]);
 
-  // Initial load tracking & Dynamic On-Page SEO section observer
-  // Initial load tracking, SQL DB synchronization & Dynamic On-Page SEO observer
+  // Firebase Auth State Listener & SQLite Session Hydration
+  useEffect(() => {
+    // Restore user session & confirmed bookings from client SQLite
+    getOfflineKeyValue<UserProfile>('ydp_google_user').then((savedUser) => {
+      if (savedUser) setCurrentUser(savedUser);
+    }).catch(() => { });
+
+    getOfflineKeyValue<BookingData[]>('ydp_confirmed_bookings').then((savedBookings) => {
+      if (Array.isArray(savedBookings) && savedBookings.length > 0) {
+        setUserBookings(savedBookings);
+      }
+    }).catch(() => { });
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const profile: UserProfile = {
+          id: user.uid,
+          name: user.displayName || 'Palace Guest',
+          email: user.email || '',
+          avatar: user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${user.displayName || 'Guest'}`,
+          points: 500,
+          tier: 'Silver Executive',
+          redeemedBenefits: [],
+          memberSince: new Date().getFullYear().toString(),
+        };
+        setCurrentUser(profile);
+        setOfflineKeyValue('ydp_google_user', profile);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Initial load tracking, DB synchronization & Dynamic On-Page SEO observer
   useEffect(() => {
     trackEvent('page_view_home', 'view', 'Homepage loaded');
 
-    // Fetch live authentic rooms from SQL database
-    fetch('/api/rooms')
-      .then((res) => (res.ok ? res.json() : []))
-      .then((dbRooms) => {
-        if (Array.isArray(dbRooms) && dbRooms.length > 0) {
-          setRooms(dbRooms);
-        }
-      })
-      .catch((err) => console.log('Loaded default authentic rooms:', err));
-
-    // Fetch live bookings from SQL database
+    // Fetch live bookings from database
     fetch('/api/bookings')
       .then((res) => (res.ok ? res.json() : []))
       .then((dbBookings) => {
         if (Array.isArray(dbBookings) && dbBookings.length > 0) {
           setUserBookings(dbBookings);
+          setOfflineKeyValue('ydp_confirmed_bookings', dbBookings);
         }
       })
       .catch((err) => console.log('Loaded local bookings:', err));
 
-    // On-page SEO Title & Description observer for user navigation
+    // Dynamic On-page SEO observer for user navigation
     const handleScroll = () => {
       const roomsEl = document.getElementById('rooms');
       const diningEl = document.getElementById('dining');
+      const faqEl = document.getElementById('faq');
       const scrollPos = window.scrollY + 250;
 
-      if (diningEl && scrollPos >= diningEl.offsetTop) {
-        document.title = 'Restaurant & Banquet Hall in Khuskheda | YashDeep Palace';
+      if (faqEl && scrollPos >= faqEl.offsetTop) {
+        document.title = 'Khuskheda Hotel FAQs & Location Guide | YashDeep Palace';
+      } else if (diningEl && scrollPos >= diningEl.offsetTop) {
+        document.title = 'Fine Dining & Restaurant in Khuskheda | YashDeep Palace';
       } else if (roomsEl && scrollPos >= roomsEl.offsetTop) {
         document.title = 'Deluxe Rooms & Suites in Khuskheda | YashDeep Palace Hotel';
       } else {
@@ -130,50 +142,43 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Save Rooms to State, LocalStorage & SQL Database (Owner CMS)
+  // Save Rooms via Hotel Data Context
   const handleSaveRooms = async (updatedRooms: Room[]) => {
-    setRooms(updatedRooms);
-    try {
-      localStorage.setItem('ydp_rooms_inventory', JSON.stringify(updatedRooms));
-      // Save each to SQL
-      for (const r of updatedRooms) {
-        await fetch('/api/rooms', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(r),
-        });
-      }
-    } catch {
-      // storage safe
+    for (const r of updatedRooms) {
+      await updateRoom(r.id, r);
     }
   };
 
-  // Google Sign-In Simulation & SQL User Sync
+  // Real Google Sign-In with Firebase Auth
   const handleGoogleSignIn = async () => {
-    const userToSave: UserProfile = INITIAL_GOOGLE_USER;
-    setCurrentUser(userToSave);
     try {
-      localStorage.setItem('ydp_google_user', JSON.stringify(userToSave));
-      await fetch('/api/users/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          uid: userToSave.id,
-          email: userToSave.email,
-          name: userToSave.name,
-          avatar: userToSave.avatar,
-        }),
-      });
-    } catch {
-      // storage safe
+      const result = await signInWithPopup(auth, googleAuthProvider);
+      const user = result.user;
+      const profile: UserProfile = {
+        id: user.uid,
+        name: user.displayName || 'Guest',
+        email: user.email || '',
+        avatar: user.photoURL || '',
+        points: 200,
+        tier: 'Silver Executive',
+        redeemedBenefits: [],
+        memberSince: new Date().getFullYear().toString(),
+      };
+      setCurrentUser(profile);
+      setOfflineKeyValue('ydp_google_user', profile);
+      trackEvent('google_sign_in_success', 'click', `User: ${profile.name}, Email: ${profile.email}`);
+    } catch (err: any) {
+      console.warn('Google sign in popup error/cancelled, using verified guest session:', err);
     }
-    trackEvent('google_sign_in_success', 'click', `User: ${userToSave.name}, Email: ${userToSave.email}`);
   };
 
   // Sign out
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+    } catch { }
     setCurrentUser(null);
-    localStorage.removeItem('ydp_google_user');
+    deleteOfflineKeyValue('ydp_google_user');
     trackEvent('user_sign_out', 'click', 'User signed out from rewards');
   };
 
@@ -188,27 +193,7 @@ export default function App() {
         : currentUser.redeemedBenefits,
     };
     setCurrentUser(updated);
-    try {
-      localStorage.setItem('ydp_google_user', JSON.stringify(updated));
-    } catch {
-      // safe
-    }
-  };
-
-  // Handle slow network simulation toggle
-  const handleToggleSlowNetwork = () => {
-    const nextState = !isSimulatingSlowNetwork;
-    setIsSimulatingSlowNetwork(nextState);
-    trackEvent('toggle_slow_network', 'click', `Simulated Slow Network: ${nextState}`);
-
-    if (nextState) {
-      setIsCatalogLoading(true);
-      setTimeout(() => {
-        setIsCatalogLoading(false);
-      }, 2500);
-    } else {
-      setIsCatalogLoading(false);
-    }
+    setOfflineKeyValue('ydp_google_user', updated);
   };
 
   // Handle Quick Booking Check from Hero
@@ -222,13 +207,6 @@ export default function App() {
     setBookingCheckOut(searchParams.checkOut);
     setBookingGuests(searchParams.guests);
     setSelectedCategory(searchParams.category);
-
-    if (isSimulatingSlowNetwork) {
-      setIsCatalogLoading(true);
-      setTimeout(() => {
-        setIsCatalogLoading(false);
-      }, 1500);
-    }
 
     const elem = document.getElementById('rooms');
     if (elem) {
@@ -244,71 +222,33 @@ export default function App() {
 
   // Open booking modal directly
   const handleOpenGeneralBooking = () => {
-    setSelectedRoom(rooms[0] || ROOMS_DATA[0]);
+    setSelectedRoom(rooms[0] || null);
     setIsBookingOpen(true);
     trackEvent('open_booking_modal', 'click', 'Navbar booking trigger');
   };
 
-  // On successful booking - saves to Cloud SQL & local state
+  // On successful booking - saves to database & local state
   const handleBookingSuccess = async (newBooking: BookingData) => {
     const updated = [newBooking, ...userBookings];
     setUserBookings(updated);
-    try {
-      localStorage.setItem('ydp_confirmed_bookings', JSON.stringify(updated));
-      // Save directly to SQL database
-      await fetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newBooking),
-      });
-    } catch (err) {
-      console.error('Failed to sync booking with SQL database:', err);
-    }
+    setOfflineKeyValue('ydp_confirmed_bookings', updated);
 
-    // Award rewards points if user is signed in (10 points per ₹100 spent)
+    // Award rewards points if user is signed in
     if (currentUser) {
       const earned = Math.round(newBooking.grandTotal * 0.1);
       handleUpdatePoints(currentUser.points + earned);
     }
   };
 
-  // Update booking status from owner portal in Cloud SQL
-  const handleUpdateBookingStatus = async (bookingId: string, status: string) => {
-    const updated = userBookings.map((b) => {
-      if (b.id === bookingId || b.bookingReference === bookingId) {
-        return { ...b, paymentStatus: status as any };
-      }
-      return b;
-    });
-    setUserBookings(updated);
-    try {
-      localStorage.setItem('ydp_confirmed_bookings', JSON.stringify(updated));
-      await fetch(`/api/bookings/${bookingId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      });
-    } catch (err) {
-      console.error('Failed to update booking status in SQL:', err);
-    }
-  };
-
   // Open booking modal with redeemed reward code
   const handleOpenBookingWithBenefit = (code: string) => {
     setActiveBenefitCode(code);
-    setSelectedRoom(rooms[0] || ROOMS_DATA[0]);
+    setSelectedRoom(rooms[0] || null);
     setIsBookingOpen(true);
   };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-amber-500/20 selection:text-amber-900 transition-colors flex flex-col font-sans">
-      {/* Network Latency Simulator & Fast Lighthouse Bar */}
-      <NetworkSimulatorBar
-        isSimulatingSlowNetwork={isSimulatingSlowNetwork}
-        onToggleSlowNetwork={handleToggleSlowNetwork}
-        onOpenAnalytics={() => setIsAnalyticsOpen(true)}
-      />
-
       {/* Confirmed Booking Toast Banner if user has active bookings */}
       {userBookings.length > 0 && (
         <div className="bg-amber-400 text-slate-950 px-4 py-2 text-xs font-semibold flex items-center justify-between shadow-xs">
@@ -320,6 +260,7 @@ export default function App() {
                 <strong className="font-mono">{userBookings[0].bookingReference}</strong> ({userBookings[0].roomName})
               </span>
             </span>
+
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsRewardsOpen(true)}
@@ -367,29 +308,26 @@ export default function App() {
         {/* Hero Section with Quick Availability Check */}
         <Hero onCheckAvailability={handleCheckAvailability} />
 
-        {/* Accommodations Catalog & Dynamic Rooms (Owner Managed) */}
+        {/* Accommodations Catalog & Dynamic Rooms */}
         <RoomCatalog
           isLoading={isCatalogLoading}
           rooms={rooms}
           onSelectRoomForBooking={handleSelectRoomForBooking}
           selectedCategory={selectedCategory}
-          onCategoryChange={(cat) => {
-            setSelectedCategory(cat);
-            if (isSimulatingSlowNetwork) {
-              setIsCatalogLoading(true);
-              setTimeout(() => setIsCatalogLoading(false), 1200);
-            }
-          }}
+          onCategoryChange={(cat) => setSelectedCategory(cat)}
         />
 
         {/* About Us & Local Landmark Proximity (Karuli Industrial Area, Honda Car Gate 4) */}
         <AboutProximity onOpenBooking={handleOpenGeneralBooking} />
 
-        {/* Fine Dining & Grand Imperial Banquets */}
-        <DiningAndBanquets />
+        {/* Fine Dining */}
+        <Dining />
 
         {/* Interactive Guest Gallery & Instagram Feed */}
         <InteractiveGallery />
+
+        {/* AEO / GEO Search & AI Overviews Knowledge FAQ Section */}
+        <AeoKnowledgeFaq />
 
         {/* Verified Reviews Section */}
         <ReviewsSection />
@@ -404,7 +342,7 @@ export default function App() {
       {/* Floating WhatsApp Concierge & Phone Dialer Bar */}
       <FloatingSocialBar onOpenBooking={handleOpenGeneralBooking} />
 
-      {/* Multi-Step Room Booking & Payment Modal */}
+      {/* Advance Room Reservation & Verification Modal */}
       <BookingModal
         isOpen={isBookingOpen}
         onClose={() => {
