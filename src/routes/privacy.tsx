@@ -6,7 +6,13 @@ export const Route = createFileRoute("/privacy")({
   head: () =>
     pageHead(
       "Privacy & Booking Terms",
-      "How Yashdeep Palace website enquiries work, how your information is used, and what to confirm before reserving.",
+      "Learn how Yashdeep Palace website enquiries work, how your information is handled securely, and what terms apply to your booking.",
+      {
+        path: "/privacy",
+        image: "/assets/og-home.jpg",
+        imageAlt: "Privacy and Booking Terms at Yashdeep Palace",
+        cta: "Read our guest privacy and data policies.",
+      },
     ),
   component: PrivacyPage,
 });

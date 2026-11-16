@@ -7,6 +7,12 @@ export const Route = createFileRoute("/")({
     ...pageHead(
       "Hotel in Khushkhera, Rajasthan",
       "Discover Yashdeep Palace in the Khushkhera–Tapukara area. Explore genuine room photographs, dining, meeting facilities and direct reservation enquiries.",
+      {
+        path: "/",
+        image: "/assets/og-home.jpg",
+        imageAlt: "Yashdeep Palace Hotel in Khushkhera, Rajasthan",
+        cta: "Book direct for best rates & instant confirmation.",
+      },
     ),
     scripts: [
       {

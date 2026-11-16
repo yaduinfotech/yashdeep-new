@@ -7,7 +7,13 @@ export const Route = createFileRoute("/booking-assistant")({
   head: () =>
     pageHead(
       "AI Booking Concierge",
-      "Plan a Yashdeep Palace stay with the AI booking concierge and contact reception to confirm rates and availability.",
+      "Plan your Yashdeep Palace stay with our virtual AI concierge, check amenities, and explore tailored room recommendations.",
+      {
+        path: "/booking-assistant",
+        image: "/assets/og-home.jpg",
+        imageAlt: "AI Booking Concierge at Yashdeep Palace",
+        cta: "Chat with our virtual concierge for tailored assistance.",
+      },
     ),
   component: () => (
     <section className="section">

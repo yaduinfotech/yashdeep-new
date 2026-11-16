@@ -18,7 +18,13 @@ export const Route = createFileRoute("/auth")({
   head: () =>
     pageHead(
       "Customer Signup & Sign In",
-      "Create your Yashdeep Palace customer profile and get extra 10% off on your first visit.",
+      "Access your Yashdeep Palace account, manage your reservations, and unlock an exclusive 10% welcome coupon on your stay.",
+      {
+        path: "/auth",
+        image: "/assets/og-home.jpg",
+        imageAlt: "Customer Sign In at Yashdeep Palace",
+        cta: "Sign up today to claim a 10% welcome discount.",
+      },
     ),
   component: CustomerAccount,
 });

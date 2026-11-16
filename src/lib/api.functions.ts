@@ -81,7 +81,7 @@ export const submitFeedback = createServerFn({ method: "POST" })
 /**
  * Server function: Requests an OTP code for mobile verification via API (no ).
  */
-export const requestMobileOtpApi = createServerFn({ method: 'POST' })
+export const requestMobileOtpApi = createServerFn({ method: "POST" })
   .validator(z.object({ phone: z.string().trim().min(8).max(25) }))
   .handler(async ({ data }) => {
     const { sendOtpChallenge } = await import("./api-otp.server");

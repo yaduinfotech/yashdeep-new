@@ -31,7 +31,7 @@ describe("API-Driven Coupon Validation & Redemption", () => {
         }),
       });
 
-      const res = await hmsValidateCoupon("WELCOME10", "guest@example.com");
+      const res = await hmsValidateCoupon("WELCOME10", "guest@example.com", 2000);
       expect(res.ok).toBe(true);
       expect(res.code).toBe("WELCOME10");
       expect(res.discountPercent).toBe(10);
@@ -48,14 +48,14 @@ describe("API-Driven Coupon Validation & Redemption", () => {
         }),
       });
 
-      const res = await hmsValidateCoupon("  ydp10  ", "guest@example.com");
+      const res = await hmsValidateCoupon("  ydp10  ", "guest@example.com", 2000);
       expect(res.ok).toBe(true);
       expect(res.code).toBe("YDP10");
       expect(res.discountPercent).toBe(10);
     });
 
     it("rejects empty coupon code", async () => {
-      const res = await hmsValidateCoupon("", "guest@example.com");
+      const res = await hmsValidateCoupon("", "guest@example.com", 2000);
       expect(res.ok).toBe(false);
       expect(res.message).toBe("Please enter a coupon code.");
     });
@@ -63,12 +63,12 @@ describe("API-Driven Coupon Validation & Redemption", () => {
     it("rejects invalid or unknown coupon codes", async () => {
       // Mock HMS API returning invalid
       global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => ({ valid: false, message: "Coupon not found" }),
+        ok: false,
+        status: 400,
+        json: async () => ({ valid: false, message: "Invalid or expired coupon code" }),
       });
 
-      const res = await hmsValidateCoupon("EXPIRED99", "guest@example.com");
+      const res = await hmsValidateCoupon("EXPIRED99", "guest@example.com", 2000);
       expect(res.ok).toBe(false);
       expect(res.message).toContain("Invalid or expired coupon code");
     });
@@ -91,7 +91,7 @@ describe("API-Driven Coupon Validation & Redemption", () => {
         };
       });
 
-      const res = await hmsValidateCoupon("ROYAL10", "royal@example.com");
+      const res = await hmsValidateCoupon("ROYAL10", "royal@example.com", 2000);
       expect(res.ok).toBe(true);
       expect(res.code).toBe("ROYAL10");
       expect(res.discountPercent).toBe(10);

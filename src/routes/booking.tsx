@@ -16,7 +16,13 @@ export const Route = createFileRoute("/booking")({
   head: () =>
     pageHead(
       "Reservation Enquiries",
-      "Choose dates, guests and your preferred room, then contact Yashdeep Palace reception to confirm rates and availability.",
+      "Seamless 4-step direct room reservation with instant confirmation, 10% welcome coupon, and zero advance payment required.",
+      {
+        path: "/booking",
+        image: "/assets/og-home.jpg",
+        imageAlt: "Direct Room Booking at Yashdeep Palace Khushkhera",
+        cta: "Book online in under 2 minutes.",
+      },
     ),
   component: BookingRoute,
 });

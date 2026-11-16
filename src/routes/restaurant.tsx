@@ -6,7 +6,13 @@ export const Route = createFileRoute("/restaurant")({
   head: () =>
     pageHead(
       "Restaurant & Dining",
-      "Discover restaurant dining at Yashdeep Palace in Khushkhera. Contact the hotel for menus, hours and table enquiries.",
+      "Discover fresh multi-cuisine dining, breakfast, snacks, and beverages at Yashdeep Palace in Khushkhera.",
+      {
+        path: "/restaurant",
+        image: "/assets/og-restaurant.jpg",
+        imageAlt: "Restaurant and Dining at Yashdeep Palace Khushkhera",
+        cta: "View dining menu & reserve a table.",
+      },
     ),
   component: DiningPage,
 });

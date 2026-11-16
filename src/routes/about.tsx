@@ -6,7 +6,13 @@ export const Route = createFileRoute("/about")({
   head: () =>
     pageHead(
       "About the Hotel",
-      "Get to know Yashdeep Palace, a hotel with accommodation, dining and meeting spaces in Khushkhera, Rajasthan.",
+      "Get to know Yashdeep Palace, a hotel offering warm hospitality, comfortable accommodation, dining and meeting spaces in Khushkhera, Rajasthan.",
+      {
+        path: "/about",
+        image: "/assets/og-home.jpg",
+        imageAlt: "About Yashdeep Palace Khushkhera",
+        cta: "Experience genuine hospitality in Khushkhera.",
+      },
     ),
   component: AboutPage,
 });

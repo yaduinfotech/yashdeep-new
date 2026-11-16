@@ -18,7 +18,13 @@ export const Route = createFileRoute("/contact")({
   head: () =>
     pageHead(
       "Contact & Directions",
-      "Contact Yashdeep Palace reception for reservations, restaurant enquiries and meetings. Find directions to Khushkhera, Rajasthan.",
+      "Contact Yashdeep Palace reception for direct room reservations, restaurant dining, and conference meetings in Khushkhera, Rajasthan.",
+      {
+        path: "/contact",
+        image: "/assets/og-contact.jpg",
+        imageAlt: "Front Desk & Entrance of Yashdeep Palace Khushkhera",
+        cta: "Get in touch with front desk 24/7.",
+      },
     ),
   component: ContactRoute,
 });

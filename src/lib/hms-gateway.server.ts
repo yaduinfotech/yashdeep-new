@@ -79,32 +79,8 @@ export async function dispatchHmsRequest<T = Record<string, unknown>>(
     "X-Client-Source": "yashdeep-web",
   };
 
-  let authToken = tokenOverride;
-  if (!authToken && rawPayload.phone) {
-    const rawPhone = String(rawPayload.phone);
-    authToken = verifiedTokenStore.getTokenFor(rawPhone);
-    if (!authToken) {
-      try {
-        const cleanPhone = sanitizePhone(rawPhone);
-        authToken = verifiedTokenStore.getTokenFor(cleanPhone);
-      } catch {
-        return {
-          ok: false,
-          message: "Authorization token not found for phone number.",
-          statusCode: 401,
-        };
-      }
-    } else {
-      throw new Error("Authorization Token: " + JSON.stringify(authToken) + "Headers: " + JSON.stringify(headers) + "Target URL: " + JSON.stringify(targetUrl) + "Sanitized Payload: " + JSON.stringify(sanitizedPayload) + "Base URL: " + JSON.stringify(baseUrl) + "Raw Payload: " + JSON.stringify(rawPayload));
-    }
-  }
-  if (!authToken && rawPayload.email) {
-    const rawEmail = String(rawPayload.email);
-    authToken = verifiedTokenStore.getTokenFor(rawEmail);
-  }
-  if (!authToken) {
-    authToken = process.env.HMS_BEARER_TOKEN;
-  }
+  const authToken = process.env.HMS_BEARER_TOKEN;
+
   if (authToken) {
     headers["Authorization"] = `Bearer ${authToken}`;
   }
@@ -116,7 +92,6 @@ export async function dispatchHmsRequest<T = Record<string, unknown>>(
       body: JSON.stringify(sanitizedPayload),
       signal: controller.signal,
     });
-
 
     const json = await res.json().catch(() => null);
     if (!res.ok) {
@@ -296,7 +271,7 @@ export async function hmsValidateCoupon(rawCode: string, rawEmail?: string, subt
       valid?: boolean;
       discountPercent?: number;
       message?: string;
-    }>("/api/coupons/validate", { "coupon": code, email, source: "website", subtotal });
+    }>("/api/coupons/validate", { coupon: code, code, email, source: "website", subtotal });
 
     // throw new Error(JSON.stringify(res) || 'Invalid or expired coupon code. Please check the code sent to your email.');
     if (res.ok) {
@@ -307,13 +282,19 @@ export async function hmsValidateCoupon(rawCode: string, rawEmail?: string, subt
         message: res?.data?.message,
       };
     } else {
-      throw new Error(res?.message || 'Invalid or expired coupon code. Please check the code sent to your email.')
+      throw new Error(
+        res?.data?.message ||
+        res?.message ||
+        "Invalid or expired coupon code. Please check the code sent to your email.",
+      );
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const err = e as Error;
     return {
       ok: false,
-      message: e.message || 'Invalid or expired coupon code. Please check the code sent to your email.'
-    }
+      message:
+        err?.message || "Invalid or expired coupon code. Please check the code sent to your email.",
+    };
   }
 }
 

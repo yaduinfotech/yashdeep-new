@@ -82,25 +82,48 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Yashdeep Palace" },
-      { name: "description", content: "Warm hospitality in Khushkhera, Rajasthan." },
+      { title: "Yashdeep Palace | Hotel in Khushkhera, Rajasthan" },
+      {
+        name: "description",
+        content:
+          "Comfortable rooms, multi-cuisine dining, and meeting facilities in Khushkhera, Rajasthan. Book direct for best rates & instant confirmation.",
+      },
       { name: "author", content: "Yashdeep Palace" },
       { name: "google-site-verification", content: "19he4ixh9ms68poL8rHgX0xg3kSMcVwOX-csjQpyECQ" },
-      { property: "og:title", content: "Yashdeep Palace" },
-      { property: "og:description", content: "Warm hospitality in Khushkhera, Rajasthan." },
+      { property: "og:site_name", content: "Yashdeep Palace" },
       { property: "og:type", content: "website" },
+      { property: "og:title", content: "Yashdeep Palace | Hotel in Khushkhera, Rajasthan" },
+      {
+        property: "og:description",
+        content:
+          "Comfortable rooms, multi-cuisine dining, and meeting facilities in Khushkhera, Rajasthan. Book direct for best rates & instant confirmation.",
+      },
+      { property: "og:url", content: "https://yashdeeppalace.com" },
+      { property: "og:image", content: "https://yashdeeppalace.com/assets/og-home.jpg" },
+      { property: "og:image:secure_url", content: "https://yashdeeppalace.com/assets/og-home.jpg" },
+      { property: "og:image:type", content: "image/jpeg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "Yashdeep Palace Hotel in Khushkhera, Rajasthan" },
+      { property: "og:locale", content: "en_IN" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Yashdeep Palace | Hotel in Khushkhera, Rajasthan" },
+      {
+        name: "twitter:description",
+        content:
+          "Comfortable rooms, multi-cuisine dining, and meeting facilities in Khushkhera, Rajasthan. Book direct for best rates & instant confirmation.",
+      },
+      { name: "twitter:image", content: "https://yashdeeppalace.com/assets/og-home.jpg" },
+      { name: "twitter:image:alt", content: "Yashdeep Palace Hotel in Khushkhera, Rajasthan" },
     ],
     links: [
+      { rel: "dns-prefetch", href: "https://fonts.googleapis.com" },
+      { rel: "dns-prefetch", href: "https://fonts.gstatic.com" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@400;500;600&display=swap",
-      },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Google+Sans:wght@500&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,400..600;1,9..40,400..600&display=swap",
       },
       {
         rel: "stylesheet",

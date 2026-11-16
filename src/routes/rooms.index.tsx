@@ -6,7 +6,13 @@ export const Route = createFileRoute("/rooms/")({
   head: () =>
     pageHead(
       "Rooms & Accommodation",
-      "Explore Deluxe and Luxury Double Rooms at Yashdeep Palace. Contact reception for current rates and availability.",
+      "Explore Deluxe and Luxury Double Rooms at Yashdeep Palace with air-conditioned comfort, high-speed Wi-Fi, and 24/7 room service.",
+      {
+        path: "/rooms",
+        image: "/assets/og-deluxe.jpg",
+        imageAlt: "Deluxe and Luxury Rooms at Yashdeep Palace Khushkhera",
+        cta: "Compare rooms & reserve your stay today.",
+      },
     ),
   component: RoomsPage,
 });

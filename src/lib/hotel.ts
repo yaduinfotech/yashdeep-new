@@ -533,17 +533,72 @@ export const faqs = [
     "If you are traveling by train, get down at Alwar Railway Station and hire a taxi to Khushkhera. If you are coming from Delhi/NCR you can take a bus or hire a taxi to Khushkhera. Please contact reception for more information.",
   ],
 ];
-export function pageHead(title: string, description: string) {
-  const fullTitle = `${title} | Yashdeep Palace`;
+export interface PageHeadOptions {
+  path?: string;
+  image?: string;
+  imageAlt?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  imageType?: string;
+  cta?: string;
+  type?: "website" | "article";
+}
+
+export const SITE_URL = "https://yashdeeppalace.com";
+export const DEFAULT_OG_IMAGE = "/assets/og-home.jpg";
+export const DEFAULT_CTA =
+  "Book direct with Yashdeep Palace for best rates & instant confirmation.";
+
+export function pageHead(title: string, description: string, options?: PageHeadOptions) {
+  const fullTitle = title.includes("Yashdeep Palace") ? title : `${title} | Yashdeep Palace`;
+  const cta = options?.cta ?? DEFAULT_CTA;
+  const trimmedDesc = description.trim();
+  const fullDescription = cta ? `${trimmedDesc} ${cta}` : trimmedDesc;
+  const path = options?.path
+    ? options.path.startsWith("/")
+      ? options.path
+      : `/${options.path}`
+    : "";
+  const canonicalUrl = `${SITE_URL}${path}`;
+
+  const imagePath = options?.image || DEFAULT_OG_IMAGE;
+  const imageUrl =
+    imagePath.startsWith("http://") || imagePath.startsWith("https://")
+      ? imagePath
+      : `${SITE_URL}${imagePath.startsWith("/") ? imagePath : `/${imagePath}`}`;
+  const imageSecureUrl = imageUrl.replace(/^http:/, "https:");
+
+  const imageWidth = String(options?.imageWidth || 1200);
+  const imageHeight = String(options?.imageHeight || 630);
+  const imageType = options?.imageType || "image/jpeg";
+  const imageAlt = options?.imageAlt || `${title} - Yashdeep Palace Khushkhera`;
+  const ogType = options?.type || "website";
+
   return {
     meta: [
       { title: fullTitle },
-      { name: "description", content: description },
+      { name: "description", content: fullDescription },
+      { property: "og:site_name", content: hotel.name },
+      { property: "og:type", content: ogType },
       { property: "og:title", content: fullTitle },
-      { property: "og:description", content: description },
-      { property: "og:type", content: "website" },
+      { property: "og:description", content: fullDescription },
+      { property: "og:url", content: canonicalUrl },
+      { property: "og:image", content: imageUrl },
+      { property: "og:image:secure_url", content: imageSecureUrl },
+      { property: "og:image:type", content: imageType },
+      { property: "og:image:width", content: imageWidth },
+      { property: "og:image:height", content: imageHeight },
+      { property: "og:image:alt", content: imageAlt },
+      { property: "og:locale", content: "en_IN" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: fullTitle },
+      { name: "twitter:description", content: fullDescription },
+      { name: "twitter:image", content: imageUrl },
+      { name: "twitter:image:alt", content: imageAlt },
     ],
+    links: options?.path
+      ? [{ rel: "canonical", href: canonicalUrl }]
+      : [{ rel: "canonical", href: SITE_URL }],
   };
 }
 export type Stay = {

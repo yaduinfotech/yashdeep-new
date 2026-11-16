@@ -6,7 +6,13 @@ export const Route = createFileRoute("/meetings")({
   head: () =>
     pageHead(
       "Meetings & Events",
-      "Plan business meetings and small gatherings at Yashdeep Palace. Enquire about seating, catering and arrangements.",
+      "Host corporate conferences, business meetings, and banquets in Khushkhera with audio-visual equipment, flexible seating, and dedicated catering.",
+      {
+        path: "/meetings",
+        image: "/assets/og-meetings.jpg",
+        imageAlt: "Meetings and Conference Facilities at Yashdeep Palace Khushkhera",
+        cta: "Enquire today for corporate bookings & events.",
+      },
     ),
   component: MeetingsPage,
 });
