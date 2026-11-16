@@ -73,9 +73,9 @@ describe('Enhanced Hotel Pages', () => {
 
       // Operating hours
       expect(screen.getByText('Breakfast Buffet & A La Carte')).toBeInTheDocument();
-      expect(screen.getByText(/10:30 AM/)).toBeInTheDocument();
+      expect(screen.getByText('07:30 AM – 10:30 AM')).toBeInTheDocument();
       expect(screen.getByText('Executive Lunch')).toBeInTheDocument();
-      expect(screen.getByText(/03:30 PM/)).toBeInTheDocument();
+      expect(screen.getByText('12:30 PM – 03:30 PM')).toBeInTheDocument();
 
       // Menu categories tabs
       const breakfastTab = screen.getByRole('button', { name: /Morning Breakfast/i });
