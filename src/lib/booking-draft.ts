@@ -1,7 +1,7 @@
-import type { Stay } from './hotel';
+import type { Stay } from "./hotel";
 
-export const BOOKING_DRAFT_KEY = 'yashdeep-booking-draft';
-export const BOOKING_DRAFT_COOKIE = 'ydp_booking_draft';
+export const BOOKING_DRAFT_KEY = "yashdeep-booking-draft";
+export const BOOKING_DRAFT_COOKIE = "ydp_booking_draft";
 
 // 36 hours TTL: 36 * 60 * 60 * 1000 = 129,600,000 ms
 export const BOOKING_DRAFT_TTL_MS = 36 * 60 * 60 * 1000;
@@ -32,17 +32,19 @@ export interface StoredBookingDraft extends BookingDraftData {
 }
 
 function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null;
+  if (typeof document === "undefined") return null;
   try {
-    const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)'));
-    return match ? decodeURIComponent(match[1] || '') : null;
+    const match = document.cookie.match(
+      new RegExp("(?:^|; )" + name.replace(/([.$?*|{}()[\]\\/+^])/g, "\\$1") + "=([^;]*)"),
+    );
+    return match ? decodeURIComponent(match[1] || "") : null;
   } catch {
     return null;
   }
 }
 
 function setCookie(name: string, value: string, maxAgeSeconds: number): void {
-  if (typeof document === 'undefined') return;
+  if (typeof document === "undefined") return;
   try {
     document.cookie = `${name}=${encodeURIComponent(value)}; max-age=${maxAgeSeconds}; path=/; SameSite=Lax`;
   } catch {
@@ -51,7 +53,7 @@ function setCookie(name: string, value: string, maxAgeSeconds: number): void {
 }
 
 function deleteCookie(name: string): void {
-  if (typeof document === 'undefined') return;
+  if (typeof document === "undefined") return;
   try {
     document.cookie = `${name}=; max-age=0; path=/; SameSite=Lax`;
   } catch {
@@ -74,25 +76,25 @@ export function hasMeaningfulBookingData(data: BookingDraftData): boolean {
  * Saves customer booking progress to both localStorage and cookie with a 36-hour TTL.
  */
 export function saveBookingDraft(data: BookingDraftData): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   if (!hasMeaningfulBookingData(data)) return;
 
   const now = Date.now();
   const stored: StoredBookingDraft = {
     step: Math.min(Math.max(data.step, 1), 3),
     stay: {
-      checkIn: data.stay.checkIn ?? '',
-      checkOut: data.stay.checkOut ?? '',
+      checkIn: data.stay.checkIn ?? "",
+      checkOut: data.stay.checkOut ?? "",
       adults: data.stay.adults ?? 2,
       children: data.stay.children ?? 0,
       rooms: data.stay.rooms ?? 1,
-      room: data.stay.room ?? '',
+      room: data.stay.room ?? "",
     },
     guest: {
-      name: data.guest.name ?? '',
-      email: data.guest.email ?? '',
-      phone: data.guest.phone ?? '',
-      requests: data.guest.requests ?? '',
+      name: data.guest.name ?? "",
+      email: data.guest.email ?? "",
+      phone: data.guest.phone ?? "",
+      requests: data.guest.requests ?? "",
     },
     appliedCoupon: data.appliedCoupon ?? null,
     savedAt: now,
@@ -115,7 +117,7 @@ export function saveBookingDraft(data: BookingDraftData): void {
  * If expired (> 36 hours) or corrupted, clears it and returns null.
  */
 export function loadBookingDraft(): StoredBookingDraft | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
 
   let raw: string | null = null;
   try {
@@ -141,7 +143,7 @@ export function loadBookingDraft(): StoredBookingDraft | null {
     }
 
     // Verify basic structure
-    if (!draft.stay || !draft.guest || typeof draft.step !== 'number') {
+    if (!draft.stay || !draft.guest || typeof draft.step !== "number") {
       clearBookingDraft();
       return null;
     }
@@ -160,7 +162,7 @@ export function loadBookingDraft(): StoredBookingDraft | null {
  * Clears any saved booking draft from both localStorage and cookie.
  */
 export function clearBookingDraft(): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   try {
     localStorage.removeItem(BOOKING_DRAFT_KEY);

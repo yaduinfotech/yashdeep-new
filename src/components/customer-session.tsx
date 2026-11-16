@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { useRouter } from '@tanstack/react-router';
-import { useQueryClient } from '@tanstack/react-query';
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useRouter } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface CustomerUser {
   id: string;
@@ -9,7 +9,7 @@ export interface CustomerUser {
   email_confirmed_at?: string;
 }
 
-const STORAGE_KEY = 'yashdeep-customer-user';
+const STORAGE_KEY = "yashdeep-customer-user";
 
 interface CustomerSessionContextValue {
   user: CustomerUser | null;
@@ -36,7 +36,7 @@ export function CustomerSession({ children }: { children: ReactNode }) {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed && typeof parsed.email === 'string') {
+        if (parsed && typeof parsed.email === "string") {
           setUserState(parsed);
         }
       }

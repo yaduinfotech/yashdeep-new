@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react';
-import { useServerFn } from '@tanstack/react-start';
-import { Link } from '@tanstack/react-router';
+import { useState, type FormEvent } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   ArrowLeft,
@@ -26,9 +26,9 @@ import {
   Compass,
   Info,
   MessageCircle,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   hotel,
   images,
@@ -39,13 +39,13 @@ import {
   enquiryMail,
   validateStay,
   localToday,
-  type Stay
-} from '@/lib/hotel';
-import { submitEnquiry } from '@/lib/api.functions';
-import { sendEmailCode, verifyEmailCode } from '@/lib/customer.functions';
-import { useCustomer } from './customer-session';
-import { PageBanner, FinalCTA } from './hotel-layout';
-import { RoomCards, FAQSection } from './hotel-sections';
+  type Stay,
+} from "@/lib/hotel";
+import { submitEnquiry } from "@/lib/api.functions";
+import { sendEmailCode, verifyEmailCode } from "@/lib/customer.functions";
+import { useCustomer } from "./customer-session";
+import { PageBanner, FinalCTA } from "./hotel-layout";
+import { RoomCards, FAQSection } from "./hotel-sections";
 
 export function RoomsPage() {
   return (
@@ -58,7 +58,9 @@ export function RoomsPage() {
       <section className="section">
         <div className="content-width">
           <RoomCards />
-          <p className="rate-note mt-4">Please confirm your preferred configuration and inclusions before booking.</p>
+          <p className="rate-note mt-4">
+            Please confirm your preferred configuration and inclusions before booking.
+          </p>
         </div>
       </section>
       <FinalCTA />
@@ -67,7 +69,10 @@ export function RoomsPage() {
 }
 
 export function RoomDetail({ slug }: { slug: string }) {
-  const room = rooms.find(r => r.slug === slug);
+  const room = rooms.find((r) => r.slug === slug);
+  const gallery = room?.gallery && room.gallery.length > 0 ? room.gallery : [room?.image || ""];
+  const [selectedPhoto, setSelectedPhoto] = useState(gallery[0]);
+
   if (!room) {
     return (
       <>
@@ -77,9 +82,13 @@ export function RoomDetail({ slug }: { slug: string }) {
         />
         <section className="section">
           <div className="content-width text-center py-12">
-            <p className="text-muted-foreground mb-6">Explore our available rooms or speak with our front desk team.</p>
+            <p className="text-muted-foreground mb-6">
+              Explore our available rooms or speak with our front desk team.
+            </p>
             <Button variant="hotel" asChild>
-              <Link to="/rooms">View all rooms <ArrowRight /></Link>
+              <Link to="/rooms">
+                View all rooms <ArrowRight />
+              </Link>
             </Button>
           </div>
         </section>
@@ -87,11 +96,8 @@ export function RoomDetail({ slug }: { slug: string }) {
     );
   }
 
-  const gallery = room.gallery && room.gallery.length > 0 ? room.gallery : [room.image];
-  const [selectedPhoto, setSelectedPhoto] = useState(gallery[0]);
-
   // Other room for comparison/cross-sell
-  const otherRoom = rooms.find(r => r.slug !== slug);
+  const otherRoom = rooms.find((r) => r.slug !== slug);
 
   return (
     <>
@@ -128,12 +134,17 @@ export function RoomDetail({ slug }: { slug: string }) {
                     key={img + i}
                     type="button"
                     onClick={() => setSelectedPhoto(img)}
-                    className={`relative shrink-0 w-20 h-16 rounded-md overflow-hidden border-2 transition-all cursor-pointer ${selectedPhoto === img
-                      ? 'border-primary ring-2 ring-primary/30'
-                      : 'border-transparent opacity-70 hover:opacity-100'
-                      }`}
+                    className={`relative shrink-0 w-20 h-16 rounded-md overflow-hidden border-2 transition-all cursor-pointer ${
+                      selectedPhoto === img
+                        ? "border-primary ring-2 ring-primary/30"
+                        : "border-transparent opacity-70 hover:opacity-100"
+                    }`}
                   >
-                    <img src={img} alt={`${room.name} view ${i + 1}`} className="w-full h-full object-cover" />
+                    <img
+                      src={img}
+                      alt={`${room.name} view ${i + 1}`}
+                      className="w-full h-full object-cover"
+                    />
                   </button>
                 ))}
               </div>
@@ -173,17 +184,20 @@ export function RoomDetail({ slug }: { slug: string }) {
             <div>
               <div className="room-rate-display mb-4">
                 <div className="room-rate-numbers flex items-baseline gap-3">
-                  <span className="room-current-price" style={{ fontSize: '32px', fontWeight: 600 }}>
-                    ₹{room.price.toLocaleString('en-IN')}
+                  <span
+                    className="room-current-price"
+                    style={{ fontSize: "32px", fontWeight: 600 }}
+                  >
+                    ₹{room.price.toLocaleString("en-IN")}
                   </span>
                   {room.original_price && (
                     <span className="room-original-price line-through text-muted-foreground text-lg">
-                      ₹{room.original_price.toLocaleString('en-IN')}
+                      ₹{room.original_price.toLocaleString("en-IN")}
                     </span>
                   )}
                   {room.original_price && (
                     <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                      Save ₹{(room.original_price - room.price).toLocaleString('en-IN')}
+                      Save ₹{(room.original_price - room.price).toLocaleString("en-IN")}
                     </span>
                   )}
                 </div>
@@ -193,30 +207,34 @@ export function RoomDetail({ slug }: { slug: string }) {
               </div>
 
               <h2>Settle in. Slow down.</h2>
-              <p className="mt-2 text-sm leading-relaxed">
-                {room.description}
-              </p>
+              <p className="mt-2 text-sm leading-relaxed">{room.description}</p>
 
               {/* Room Specifications Ribbon */}
               <div className="my-5 grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 bg-muted/40 rounded-lg border border-border text-xs">
                 <div className="flex items-center gap-2">
                   <Users className="text-primary size-4 shrink-0" />
                   <div>
-                    <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">Occupancy</span>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">
+                      Occupancy
+                    </span>
                     <span className="font-medium text-foreground">{room.occupancy}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <BedDouble className="text-primary size-4 shrink-0" />
                   <div>
-                    <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">Bed Type</span>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">
+                      Bed Type
+                    </span>
                     <span className="font-medium text-foreground">{room.bed}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Wind className="text-primary size-4 shrink-0" />
                   <div>
-                    <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">Climate</span>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">
+                      Climate
+                    </span>
                     <span className="font-medium text-foreground">Split AC</span>
                   </div>
                 </div>
@@ -224,7 +242,9 @@ export function RoomDetail({ slug }: { slug: string }) {
                   <div className="flex items-center gap-2">
                     <Maximize2 className="text-primary size-4 shrink-0" />
                     <div>
-                      <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">Room Size</span>
+                      <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">
+                        Room Size
+                      </span>
                       <span className="font-medium text-foreground">{room.size}</span>
                     </div>
                   </div>
@@ -233,7 +253,9 @@ export function RoomDetail({ slug }: { slug: string }) {
                   <div className="flex items-center gap-2">
                     <Compass className="text-primary size-4 shrink-0" />
                     <div>
-                      <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">View</span>
+                      <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">
+                        View
+                      </span>
                       <span className="font-medium text-foreground">{room.view}</span>
                     </div>
                   </div>
@@ -241,8 +263,12 @@ export function RoomDetail({ slug }: { slug: string }) {
                 <div className="flex items-center gap-2">
                   <Clock className="text-primary size-4 shrink-0" />
                   <div>
-                    <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">Timing</span>
-                    <span className="font-medium text-foreground">{hotel.checkInTime} In / {hotel.checkOutTime} Out</span>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-wider">
+                      Timing
+                    </span>
+                    <span className="font-medium text-foreground">
+                      {hotel.checkInTime} In / {hotel.checkOutTime} Out
+                    </span>
                   </div>
                 </div>
               </div>
@@ -254,7 +280,7 @@ export function RoomDetail({ slug }: { slug: string }) {
                     What's included in your stay:
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    {room.inclusions.map(inc => (
+                    {room.inclusions.map((inc) => (
                       <div key={inc} className="flex items-start gap-2">
                         <Check className="text-primary size-3.5 shrink-0 mt-0.5" />
                         <span>{inc}</span>
@@ -267,7 +293,12 @@ export function RoomDetail({ slug }: { slug: string }) {
 
             {/* Direct Booking & Instant Help Actions */}
             <div className="mt-4 pt-4 border-t border-border space-y-3">
-              <Button variant="hotel" size="lg" className="w-full text-xs tracking-wider uppercase font-semibold" asChild>
+              <Button
+                variant="hotel"
+                size="lg"
+                className="w-full text-xs tracking-wider uppercase font-semibold"
+                asChild
+              >
                 <Link to="/booking" search={{ room: room.name }}>
                   Reserve this room <ArrowRight className="size-4 ml-1" />
                 </Link>
@@ -298,13 +329,16 @@ export function RoomDetail({ slug }: { slug: string }) {
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {room.amenityGroups.map(grp => (
-                <div key={grp.category} className="p-5 rounded-xl bg-card border border-border shadow-xs space-y-3">
+              {room.amenityGroups.map((grp) => (
+                <div
+                  key={grp.category}
+                  className="p-5 rounded-xl bg-card border border-border shadow-xs space-y-3"
+                >
                   <h3 className="font-serif text-lg font-medium text-foreground pb-2 border-b border-border/70">
                     {grp.category}
                   </h3>
                   <ul className="space-y-2 text-xs text-muted-foreground">
-                    {grp.items.map(item => (
+                    {grp.items.map((item) => (
                       <li key={item} className="flex items-start gap-2">
                         <Check className="text-primary size-3.5 shrink-0 mt-0.5" />
                         <span>{item}</span>
@@ -326,15 +360,25 @@ export function RoomDetail({ slug }: { slug: string }) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-muted-foreground mt-4">
               <div>
                 <h4 className="font-semibold text-foreground mb-1">Check-in & Check-out</h4>
-                <p>Standard check-in is at {hotel.checkInTime} and check-out is at {hotel.checkOutTime}. Early check-in or late check-out is available upon request (subject to room availability).</p>
+                <p>
+                  Standard check-in is at {hotel.checkInTime} and check-out is at{" "}
+                  {hotel.checkOutTime}. Early check-in or late check-out is available upon request
+                  (subject to room availability).
+                </p>
               </div>
               <div>
                 <h4 className="font-semibold text-foreground mb-1">Government ID Requirement</h4>
-                <p>All adult guests must present a valid government-issued photo ID (Aadhaar, Passport, or Driving License) at the reception desk during check-in.</p>
+                <p>
+                  All adult guests must present a valid government-issued photo ID (Aadhaar,
+                  Passport, or Driving License) at the reception desk during check-in.
+                </p>
               </div>
               <div>
                 <h4 className="font-semibold text-foreground mb-1">Cancellation & Changes</h4>
-                <p>Enjoy flexible reservations with free cancellation up to 24 hours prior to check-in. Contact reception directly to reschedule or modify your booking.</p>
+                <p>
+                  Enjoy flexible reservations with free cancellation up to 24 hours prior to
+                  check-in. Contact reception directly to reschedule or modify your booking.
+                </p>
               </div>
             </div>
           </div>
@@ -350,11 +394,15 @@ export function RoomDetail({ slug }: { slug: string }) {
                 className="w-24 h-20 rounded-lg object-cover border border-border shrink-0"
               />
               <div>
-                <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Also available</span>
+                <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                  Also available
+                </span>
                 <h3 className="font-serif text-xl font-medium mt-0.5">{otherRoom.name}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5 max-w-md line-clamp-1">{otherRoom.description}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 max-w-md line-clamp-1">
+                  {otherRoom.description}
+                </p>
                 <span className="text-sm font-semibold text-primary mt-1 block">
-                  ₹{otherRoom.price.toLocaleString('en-IN')} / night + 5% GST
+                  ₹{otherRoom.price.toLocaleString("en-IN")} / night + 5% GST
                 </span>
               </div>
             </div>
@@ -410,8 +458,15 @@ export function DiningPage() {
             {/* Quick Dining Atmosphere Thumbnails */}
             <div className="grid grid-cols-3 gap-2.5">
               {diningInfo.gallery.slice(1).map((photo, idx) => (
-                <div key={photo + idx} className="rounded-lg overflow-hidden border border-border aspect-[4/3]">
-                  <img src={photo} alt={`Dining atmosphere ${idx + 1}`} className="w-full h-full object-cover" />
+                <div
+                  key={photo + idx}
+                  className="rounded-lg overflow-hidden border border-border aspect-[4/3]"
+                >
+                  <img
+                    src={photo}
+                    alt={`Dining atmosphere ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               ))}
             </div>
@@ -420,23 +475,37 @@ export function DiningPage() {
           <div className="detail-copy flex flex-col justify-between">
             <div>
               <div className="eyebrow">At the table</div>
-              <h2>A meal to make<br />your day memorable.</h2>
+              <h2>
+                A meal to make
+                <br />
+                your day memorable.
+              </h2>
               <p className="mt-3 text-sm leading-relaxed">
-                Bring your appetite and your favourite company. The restaurant at Yashdeep Palace offers a comfortable, air-conditioned setting for resident guests, visiting business delegates, and local visitors alike.
+                Bring your appetite and your favourite company. The restaurant at Yashdeep Palace
+                offers a comfortable, air-conditioned setting for resident guests, visiting business
+                delegates, and local visitors alike.
               </p>
               <p className="mt-2 text-sm leading-relaxed">
-                Our kitchen blends the authentic culinary traditions of Rajasthan and North India with homestyle care, comforting Chinese favourites, and wholesome breakfasts. Whether you need a quick executive lunch or a relaxed dinner after work, we make space for great food and genuine company.
+                Our kitchen blends the authentic culinary traditions of Rajasthan and North India
+                with homestyle care, comforting Chinese favourites, and wholesome breakfasts.
+                Whether you need a quick executive lunch or a relaxed dinner after work, we make
+                space for great food and genuine company.
               </p>
 
               {/* Key Dining Pillars */}
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                {diningInfo.features.map(f => (
-                  <div key={f.title} className="p-3 rounded-lg bg-card border border-border/80 space-y-1">
+                {diningInfo.features.map((f) => (
+                  <div
+                    key={f.title}
+                    className="p-3 rounded-lg bg-card border border-border/80 space-y-1"
+                  >
                     <h4 className="font-semibold text-foreground flex items-center gap-1.5">
                       <Sparkles className="size-3.5 text-primary shrink-0" />
                       {f.title}
                     </h4>
-                    <p className="text-muted-foreground text-[11px] leading-normal">{f.description}</p>
+                    <p className="text-muted-foreground text-[11px] leading-normal">
+                      {f.description}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -444,9 +513,13 @@ export function DiningPage() {
 
             {/* Actions */}
             <div className="mt-6 pt-5 border-t border-border flex flex-wrap items-center gap-3">
-
               <Button variant="hotel" asChild>
-                <a href="https://zeesto.ai.studio/menu/yashdeep-palace" target="_blank" rel="noreferrer" title="Explore Digital Menu">
+                <a
+                  href="https://zeesto.ai.studio/menu/yashdeep-palace"
+                  target="_blank"
+                  rel="noreferrer"
+                  title="Explore Digital Menu"
+                >
                   View full digital menu <ArrowRight />
                 </a>
               </Button>
@@ -473,7 +546,10 @@ export function DiningPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {diningInfo.hours.map((h, i) => (
-              <div key={h.meal} className="p-5 rounded-xl bg-card border border-border shadow-xs space-y-2">
+              <div
+                key={h.meal}
+                className="p-5 rounded-xl bg-card border border-border shadow-xs space-y-2"
+              >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
                     Meal {i + 1}
@@ -490,21 +566,24 @@ export function DiningPage() {
           </div>
         </div>
 
-
         {/* Corporate & Group Dining Banner */}
         <div className="content-width mt-16 p-8 rounded-2xl bg-secondary text-hero-foreground flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="space-y-2 max-w-xl">
-            <span className="text-xs uppercase tracking-widest text-primary font-semibold">Corporate & Group Gatherings</span>
+            <span className="text-xs uppercase tracking-widest text-primary font-semibold">
+              Corporate & Group Gatherings
+            </span>
             <h3 className="font-serif text-2xl md:text-3xl font-medium text-hero-foreground">
               Hosting an executive lunch or company dinner?
             </h3>
             <p className="text-xs text-hero-muted leading-relaxed">
-              We provide customized corporate thalis, buffet spreads, and private hall arrangements for teams visiting Honda Cars, Karuli, Tapukara, and Khushkhera plants. Special dietary plans and packed boxes available.
+              We provide customized corporate thalis, buffet spreads, and private hall arrangements
+              for teams visiting Honda Cars, Karuli, Tapukara, and Khushkhera plants. Special
+              dietary plans and packed boxes available.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
             <Button variant="hotel" asChild>
-              <Link to="/contact" search={{ type: 'Restaurant enquiry' }}>
+              <Link to="/contact" search={{ type: "Restaurant enquiry" }}>
                 Plan corporate meal <ArrowRight />
               </Link>
             </Button>
@@ -522,7 +601,51 @@ export function DiningPage() {
   );
 }
 
-export function MeetingsPage() { return <><PageBanner title="Meetings & events" description="Bring people together for business conversations, small gatherings and time well spent." eyebrow="Space for connection" /><section className="section"><div className="content-width detail-grid"><img src={images.meeting} alt="Actual Yashdeep Palace meeting room and lounge" width="800" height="650" /><div className="detail-copy"><h2>A place to meet.<br />A reason to connect.</h2><p>Our meeting room and lounge provide a setting for business travellers and groups visiting the Khushkhera industrial area.</p><p>Share your date, group size and requirements with the hotel. Reception will confirm seating capacity, layout, equipment, catering options and pricing.</p><Button variant="hotel" asChild><Link to="/contact" search={{ type: 'Meeting or event enquiry' }}>Plan your gathering <ArrowRight /></Link></Button><div className="policy-note">Meeting facilities are available. Specific event arrangements and capacities are subject to confirmation.</div></div></div></section><FinalCTA /></>; }
+export function MeetingsPage() {
+  return (
+    <>
+      <PageBanner
+        title="Meetings & events"
+        description="Bring people together for business conversations, small gatherings and time well spent."
+        eyebrow="Space for connection"
+      />
+      <section className="section">
+        <div className="content-width detail-grid">
+          <img
+            src={images.meeting}
+            alt="Actual Yashdeep Palace meeting room and lounge"
+            width="800"
+            height="650"
+          />
+          <div className="detail-copy">
+            <h2>
+              A place to meet.
+              <br />A reason to connect.
+            </h2>
+            <p>
+              Our meeting room and lounge provide a setting for business travellers and groups
+              visiting the Khushkhera industrial area.
+            </p>
+            <p>
+              Share your date, group size and requirements with the hotel. Reception will confirm
+              seating capacity, layout, equipment, catering options and pricing.
+            </p>
+            <Button variant="hotel" asChild>
+              <Link to="/contact" search={{ type: "Meeting or event enquiry" }}>
+                Plan your gathering <ArrowRight />
+              </Link>
+            </Button>
+            <div className="policy-note">
+              Meeting facilities are available. Specific event arrangements and capacities are
+              subject to confirmation.
+            </div>
+          </div>
+        </div>
+      </section>
+      <FinalCTA />
+    </>
+  );
+}
 
 export function AboutPage() {
   return (
@@ -552,7 +675,11 @@ export function AboutPage() {
           <div className="detail-copy flex flex-col justify-between">
             <div>
               <div className="eyebrow">Our Story</div>
-              <h2>Rooted in hospitality.<br />Crafted for your stay.</h2>
+              <h2>
+                Rooted in hospitality.
+                <br />
+                Crafted for your stay.
+              </h2>
               {aboutInfo.story.map((para, i) => (
                 <p key={i} className="mt-3 text-sm leading-relaxed">
                   {para}
@@ -576,8 +703,11 @@ export function AboutPage() {
         {/* Fact Sheet & Key Numbers */}
         <div className="content-width mt-16 pt-12 border-t border-border">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {aboutInfo.stats.map(s => (
-              <div key={s.label} className="p-6 rounded-xl bg-card border border-border text-center shadow-xs space-y-1">
+            {aboutInfo.stats.map((s) => (
+              <div
+                key={s.label}
+                className="p-6 rounded-xl bg-card border border-border text-center shadow-xs space-y-1"
+              >
                 <span className="font-serif text-3xl md:text-4xl font-semibold text-primary block">
                   {s.value}
                 </span>
@@ -599,7 +729,10 @@ export function AboutPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {aboutInfo.pillars.map((p, idx) => (
-              <div key={p.title} className="p-6 rounded-xl bg-card border border-border shadow-xs space-y-2">
+              <div
+                key={p.title}
+                className="p-6 rounded-xl bg-card border border-border shadow-xs space-y-2"
+              >
                 <div className="flex items-center gap-2">
                   <span className="font-serif text-primary text-xl font-semibold">0{idx + 1}.</span>
                   <h3 className="font-serif text-xl font-medium text-foreground">{p.title}</h3>
@@ -636,7 +769,7 @@ export function AboutPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
-                  {aboutInfo.landmarks.map(lm => (
+                  {aboutInfo.landmarks.map((lm) => (
                     <tr key={lm.name} className="hover:bg-muted/20 transition-colors">
                       <td className="p-3.5 font-medium text-foreground flex items-center gap-2">
                         <MapPin className="size-3.5 text-primary shrink-0" />
@@ -655,8 +788,16 @@ export function AboutPage() {
               </table>
             </div>
             <div className="p-3.5 bg-muted/40 border-t border-border flex flex-col sm:flex-row items-center justify-between text-xs text-muted-foreground gap-2">
-              <span>GPS: Yashdeep Palace, Opposite Honda Car Gate No. 4, Karuli Industrial Area, Khushkhera</span>
-              <a href={hotel.maps} target="_blank" rel="noreferrer" className="text-primary hover:underline font-medium inline-flex items-center gap-1">
+              <span>
+                GPS: Yashdeep Palace, Opposite Honda Car Gate No. 4, Karuli Industrial Area,
+                Khushkhera
+              </span>
+              <a
+                href={hotel.maps}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline font-medium inline-flex items-center gap-1"
+              >
                 Open in Google Maps <ArrowRight className="size-3" />
               </a>
             </div>
@@ -673,15 +814,16 @@ export function AboutPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {aboutInfo.facilities.map(fac => (
-              <div key={fac.title} className="p-5 rounded-xl bg-card border border-border shadow-xs space-y-2">
+            {aboutInfo.facilities.map((fac) => (
+              <div
+                key={fac.title}
+                className="p-5 rounded-xl bg-card border border-border shadow-xs space-y-2"
+              >
                 <h3 className="font-serif text-lg font-medium text-foreground flex items-center gap-2">
                   <CheckCircle className="size-4 text-primary shrink-0" />
                   {fac.title}
                 </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {fac.description}
-                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{fac.description}</p>
               </div>
             ))}
           </div>
@@ -701,7 +843,10 @@ export function AboutPage() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
             {aboutInfo.gallery.slice(0, 4).map((img, idx) => (
-              <div key={img + idx} className="rounded-xl overflow-hidden border border-border aspect-[4/3] relative group">
+              <div
+                key={img + idx}
+                className="rounded-xl overflow-hidden border border-border aspect-[4/3] relative group"
+              >
                 <img
                   src={img}
                   alt={`Yashdeep Palace property highlight ${idx + 1}`}
@@ -717,40 +862,136 @@ export function AboutPage() {
     </>
   );
 }
-export function GalleryPage() { const [filter, setFilter] = useState('All'); const [selected, setSelected] = useState<number | undefined>(); const filtered = photos.filter(p => filter === 'All' || p.category === filter); const current = selected === undefined ? undefined : filtered[selected]; return <><PageBanner title="The property gallery" description="An honest glimpse of Yashdeep Palace." eyebrow="See your stay" /><section className="section"><div className="content-width"><div className="filter-tabs" aria-label="Gallery filters">{['All', 'Exterior', 'Reception', 'Rooms', 'Dining', 'Meetings'].map(f => <Button key={f} variant={f === filter ? 'default' : 'outline'} onClick={() => { setFilter(f); setSelected(undefined); }} aria-pressed={f === filter}>{f}</Button>)}</div><div className="gallery-grid">{filtered.map((p, i) => <Button className="gallery-tile" variant="ghost" key={p.title} onClick={() => setSelected(i)} aria-label={`View ${p.title}`}><img src={p.image} alt={p.title} loading="lazy" width="500" height="385" /><span>{p.title}</span></Button>)}</div></div></section><Dialog open={selected !== undefined} onOpenChange={o => { if (!o) setSelected(undefined); }}><DialogContent className="lightbox"><DialogTitle>{current?.title}</DialogTitle><DialogDescription>Yashdeep Palace property photograph</DialogDescription>{current && <img className="lightbox-image" src={current.image} alt={current.title} />}<div className="lightbox-controls"><Button variant="outline" size="icon" aria-label="Previous photograph" onClick={() => setSelected(i => ((i ?? 0) - 1 + filtered.length) % filtered.length)}><ArrowLeft /></Button><span>{(selected ?? 0) + 1} / {filtered.length}</span><Button variant="outline" size="icon" aria-label="Next photograph" onClick={() => setSelected(i => ((i ?? 0) + 1) % filtered.length)}><ArrowRight /></Button></div></DialogContent></Dialog><FinalCTA /></>; }
+export function GalleryPage() {
+  const [filter, setFilter] = useState("All");
+  const [selected, setSelected] = useState<number | undefined>();
+  const filtered = photos.filter((p) => filter === "All" || p.category === filter);
+  const current = selected === undefined ? undefined : filtered[selected];
+  return (
+    <>
+      <PageBanner
+        title="The property gallery"
+        description="An honest glimpse of Yashdeep Palace."
+        eyebrow="See your stay"
+      />
+      <section className="section">
+        <div className="content-width">
+          <div className="filter-tabs" aria-label="Gallery filters">
+            {["All", "Exterior", "Reception", "Rooms", "Dining", "Meetings"].map((f) => (
+              <Button
+                key={f}
+                variant={f === filter ? "default" : "outline"}
+                onClick={() => {
+                  setFilter(f);
+                  setSelected(undefined);
+                }}
+                aria-pressed={f === filter}
+              >
+                {f}
+              </Button>
+            ))}
+          </div>
+          <div className="gallery-grid">
+            {filtered.map((p, i) => (
+              <Button
+                className="gallery-tile"
+                variant="ghost"
+                key={p.title}
+                onClick={() => setSelected(i)}
+                aria-label={`View ${p.title}`}
+              >
+                <img src={p.image} alt={p.title} loading="lazy" width="500" height="385" />
+                <span>{p.title}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+      </section>
+      <Dialog
+        open={selected !== undefined}
+        onOpenChange={(o) => {
+          if (!o) setSelected(undefined);
+        }}
+      >
+        <DialogContent className="lightbox">
+          <DialogTitle>{current?.title}</DialogTitle>
+          <DialogDescription>Yashdeep Palace property photograph</DialogDescription>
+          {current && <img className="lightbox-image" src={current.image} alt={current.title} />}
+          <div className="lightbox-controls">
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Previous photograph"
+              onClick={() => setSelected((i) => ((i ?? 0) - 1 + filtered.length) % filtered.length)}
+            >
+              <ArrowLeft />
+            </Button>
+            <span>
+              {(selected ?? 0) + 1} / {filtered.length}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Next photograph"
+              onClick={() => setSelected((i) => ((i ?? 0) + 1) % filtered.length)}
+            >
+              <ArrowRight />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <FinalCTA />
+    </>
+  );
+}
 
-export { BookingPage } from './booking-wizard';
-export function ContactPage({ type = 'General enquiry' }: { type?: string | undefined }) {
+type EnquiryType =
+  "General enquiry" | "Restaurant enquiry" | "Meeting or event enquiry" | "Reservation enquiry";
+
+export { BookingPage } from "./booking-wizard";
+export function ContactPage({ type = "General enquiry" }: { type?: string | undefined }) {
   const { user } = useCustomer();
   const [review, setReview] = useState(false);
-  const [form, setForm] = useState<{ name: string; email: string; phone: string; type: 'General enquiry' | 'Restaurant enquiry' | 'Meeting or event enquiry' | 'Reservation enquiry'; message: string }>({ name: '', email: user?.email || '', phone: '', type: (type as any) || 'General enquiry', message: '' });
+  const [form, setForm] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    type: EnquiryType;
+    message: string;
+  }>({
+    name: "",
+    email: user?.email || "",
+    phone: "",
+    type: (type as EnquiryType) || "General enquiry",
+    message: "",
+  });
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [reference, setReference] = useState('');
+  const [error, setError] = useState("");
+  const [reference, setReference] = useState("");
 
   // Email OTP verification state before submitting enquiry
   const [otpSent, setOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-  const [otpNotice, setOtpNotice] = useState('');
-  const [verificationToken, setVerificationToken] = useState('');
+  const [otpCode, setOtpCode] = useState("");
+  const [otpNotice, setOtpNotice] = useState("");
+  const [verificationToken, setVerificationToken] = useState("");
 
   const submitFn = useServerFn(submitEnquiry);
   const sendEmailOtp = useServerFn(sendEmailCode);
   const verifyEmailOtp = useServerFn(verifyEmailCode);
 
   const isEmailAlreadyVerified = Boolean(
-    user?.email_confirmed_at && user.email?.toLowerCase() === form.email.trim().toLowerCase()
+    user?.email_confirmed_at && user.email?.toLowerCase() === form.email.trim().toLowerCase(),
   );
 
   async function handleSendEmailOtp() {
-    setError('');
-    setOtpNotice('');
+    setError("");
+    setOtpNotice("");
     if (!form.name.trim() || form.name.trim().length < 2) {
-      setError('Please enter your full name (at least 2 characters).');
+      setError("Please enter your full name (at least 2 characters).");
       return;
     }
-    if (!form.email.trim() || !form.email.includes('@')) {
-      setError('Please enter a valid email address.');
+    if (!form.email.trim() || !form.email.includes("@")) {
+      setError("Please enter a valid email address.");
       return;
     }
     setBusy(true);
@@ -766,10 +1007,14 @@ export function ContactPage({ type = 'General enquiry' }: { type?: string | unde
         setOtpSent(true);
         setOtpNotice(res.message || `Verification code sent to ${form.email}.`);
       } else {
-        setError(res?.message || 'Could not send verification code.');
+        setError(res?.message || "Could not send verification code.");
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Could not send verification code. Please check your email.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not send verification code. Please check your email.",
+      );
     } finally {
       setBusy(false);
     }
@@ -777,7 +1022,7 @@ export function ContactPage({ type = 'General enquiry' }: { type?: string | unde
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setError('');
+    setError("");
 
     // If email is not yet verified, require email OTP
     if (!isEmailAlreadyVerified && !verificationToken) {
@@ -786,7 +1031,7 @@ export function ContactPage({ type = 'General enquiry' }: { type?: string | unde
         return;
       }
       if (!otpCode || otpCode.trim().length < 6) {
-        setError('Please enter the 6-digit verification code sent to your email.');
+        setError("Please enter the 6-digit verification code sent to your email.");
         return;
       }
 
@@ -799,7 +1044,7 @@ export function ContactPage({ type = 'General enquiry' }: { type?: string | unde
           },
         });
         if (!verifyRes?.ok) {
-          setError(verifyRes?.message || 'Invalid or expired verification code.');
+          setError(verifyRes?.message || "Invalid or expired verification code.");
           setBusy(false);
           return;
         }
@@ -814,9 +1059,9 @@ export function ContactPage({ type = 'General enquiry' }: { type?: string | unde
             verificationToken: token,
           },
         });
-        setReference(res.reference || 'RECEIVED');
+        setReference(res.reference || "RECEIVED");
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Unable to verify code or submit enquiry.';
+        const msg = err instanceof Error ? err.message : "Unable to verify code or submit enquiry.";
         setError(msg);
       } finally {
         setBusy(false);
@@ -834,9 +1079,9 @@ export function ContactPage({ type = 'General enquiry' }: { type?: string | unde
           verificationToken,
         },
       });
-      setReference(res.reference || 'RECEIVED');
+      setReference(res.reference || "RECEIVED");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Unable to submit enquiry.';
+      const msg = err instanceof Error ? err.message : "Unable to submit enquiry.";
       setError(msg);
       setReview(true);
     } finally {
@@ -846,7 +1091,11 @@ export function ContactPage({ type = 'General enquiry' }: { type?: string | unde
 
   return (
     <>
-      <PageBanner title="Contact & directions" description="A question, a room enquiry, or a gathering to plan? Get in touch with reception." eyebrow="Let's make your visit easy" />
+      <PageBanner
+        title="Contact & directions"
+        description="A question, a room enquiry, or a gathering to plan? Get in touch with reception."
+        eyebrow="Let's make your visit easy"
+      />
       <section className="section">
         <div className="content-width enquiry-layout">
           <div>
@@ -858,9 +1107,27 @@ export function ContactPage({ type = 'General enquiry' }: { type?: string | unde
                 <p className="rate-note">Enquiry reference: {reference}</p>
                 <div className="wizard-actions mt-6">
                   <Button variant="hotel" asChild>
-                    <a href={hotel.phoneLink}><Phone />Call reception</a>
+                    <a href={hotel.phoneLink}>
+                      <Phone />
+                      Call reception
+                    </a>
                   </Button>
-                  <Button variant="outline" onClick={() => { setReference(''); setOtpSent(false); setOtpCode(''); setVerificationToken(''); setForm({ name: '', email: user?.email || '', phone: '', type: 'General enquiry', message: '' }); }}>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setReference("");
+                      setOtpSent(false);
+                      setOtpCode("");
+                      setVerificationToken("");
+                      setForm({
+                        name: "",
+                        email: user?.email || "",
+                        phone: "",
+                        type: "General enquiry",
+                        message: "",
+                      });
+                    }}
+                  >
                     Submit another enquiry
                   </Button>
                 </div>
@@ -870,11 +1137,32 @@ export function ContactPage({ type = 'General enquiry' }: { type?: string | unde
                 <h2 className="full-field">We'd love to hear from you.</h2>
                 <div className="form-field">
                   <label htmlFor="contact-name">Full name *</label>
-                  <input id="contact-name" required maxLength={150} value={form.name} onChange={e => { setReview(false); setForm(f => ({ ...f, name: e.target.value })); }} />
+                  <input
+                    id="contact-name"
+                    required
+                    maxLength={150}
+                    value={form.name}
+                    onChange={(e) => {
+                      setReview(false);
+                      setForm((f) => ({ ...f, name: e.target.value }));
+                    }}
+                  />
                 </div>
                 <div className="form-field">
                   <label htmlFor="contact-email">Email address *</label>
-                  <input id="contact-email" readOnly={isEmailAlreadyVerified} type="email" required value={form.email} onChange={e => { setReview(false); setOtpSent(false); setVerificationToken(''); setForm(f => ({ ...f, email: e.target.value })); }} />
+                  <input
+                    id="contact-email"
+                    readOnly={isEmailAlreadyVerified}
+                    type="email"
+                    required
+                    value={form.email}
+                    onChange={(e) => {
+                      setReview(false);
+                      setOtpSent(false);
+                      setVerificationToken("");
+                      setForm((f) => ({ ...f, email: e.target.value }));
+                    }}
+                  />
                   {isEmailAlreadyVerified && (
                     <span className="text-xs text-emerald-600 flex items-center gap-1 mt-1 font-medium">
                       <ShieldCheck size={14} /> Email verified
@@ -883,17 +1171,49 @@ export function ContactPage({ type = 'General enquiry' }: { type?: string | unde
                 </div>
                 <div className="form-field">
                   <label htmlFor="contact-phone">Phone Number *</label>
-                  <input id="contact-phone" type="tel" required value={form.phone} onChange={e => { setReview(false); setForm(f => ({ ...f, phone: e.target.value })); }} />
+                  <input
+                    id="contact-phone"
+                    type="tel"
+                    required
+                    value={form.phone}
+                    onChange={(e) => {
+                      setReview(false);
+                      setForm((f) => ({ ...f, phone: e.target.value }));
+                    }}
+                  />
                 </div>
                 <div className="form-field">
                   <label htmlFor="contact-type">Enquiry type</label>
-                  <select id="contact-type" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as any }))}>
-                    {['General enquiry', 'Restaurant enquiry', 'Meeting or event enquiry', 'Reservation enquiry'].map(t => <option key={t}>{t}</option>)}
+                  <select
+                    id="contact-type"
+                    value={form.type}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, type: e.target.value as EnquiryType }))
+                    }
+                  >
+                    {[
+                      "General enquiry",
+                      "Restaurant enquiry",
+                      "Meeting or event enquiry",
+                      "Reservation enquiry",
+                    ].map((t) => (
+                      <option key={t}>{t}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="form-field full-field">
                   <label htmlFor="contact-message">Your message *</label>
-                  <textarea id="contact-message" required rows={5} maxLength={2000} value={form.message} onChange={e => { setReview(false); setForm(f => ({ ...f, message: e.target.value })); }} />
+                  <textarea
+                    id="contact-message"
+                    required
+                    rows={5}
+                    maxLength={2000}
+                    value={form.message}
+                    onChange={(e) => {
+                      setReview(false);
+                      setForm((f) => ({ ...f, message: e.target.value }));
+                    }}
+                  />
                 </div>
 
                 {/* Email OTP Verification Challenge Section */}
@@ -903,7 +1223,8 @@ export function ContactPage({ type = 'General enquiry' }: { type?: string | unde
                       <KeyRound className="text-gold" size={18} /> Verify Your Email Address
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      We sent a 6-digit verification code to <strong>{form.email}</strong>. Please enter it below to confirm your enquiry.
+                      We sent a 6-digit verification code to <strong>{form.email}</strong>. Please
+                      enter it below to confirm your enquiry.
                     </p>
                     <div className="flex flex-wrap items-center gap-3">
                       <input
@@ -914,14 +1235,14 @@ export function ContactPage({ type = 'General enquiry' }: { type?: string | unde
                         placeholder="6-digit code"
                         className="w-44 px-3 py-2 rounded-md border border-input bg-background font-mono text-center tracking-widest text-base"
                         value={otpCode}
-                        onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
                       />
                       <Button
                         type="submit"
                         variant="hotel"
                         disabled={busy || otpCode.trim().length < 6}
                       >
-                        {busy ? 'Verifying & Submitting…' : 'Verify & Submit Enquiry'}
+                        {busy ? "Verifying & Submitting…" : "Verify & Submit Enquiry"}
                       </Button>
                       <Button
                         type="button"
@@ -936,34 +1257,66 @@ export function ContactPage({ type = 'General enquiry' }: { type?: string | unde
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => { setOtpSent(false); setOtpCode(''); }}
+                        onClick={() => {
+                          setOtpSent(false);
+                          setOtpCode("");
+                        }}
                       >
                         Change email
                       </Button>
                     </div>
-                    {otpNotice && <p className="text-xs text-emerald-600 font-medium">{otpNotice}</p>}
+                    {otpNotice && (
+                      <p className="text-xs text-emerald-600 font-medium">{otpNotice}</p>
+                    )}
                   </div>
                 )}
 
-                {error && <p className="form-error full-field" role="alert">{error}</p>}
+                {error && (
+                  <p className="form-error full-field" role="alert">
+                    {error}
+                  </p>
+                )}
                 <div className="full-field">
                   {review ? (
                     <>
-                      <p className="policy-note">The server was unable to save your enquiry automatically. Open your email app to send it directly to reception or call reception at <a href={`tel:${hotel.phone}`}>{hotel.phone}</a>.</p>
+                      <p className="policy-note">
+                        The server was unable to save your enquiry automatically. Open your email
+                        app to send it directly to reception or call reception at{" "}
+                        <a href={`tel:${hotel.phone}`}>{hotel.phone}</a>.
+                      </p>
                       <Button variant="hotel" asChild>
-                        <a href={enquiryMail(`${form.type} — Yashdeep Palace`, `Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`)}><Mail />Open email enquiry</a>
+                        <a
+                          href={enquiryMail(
+                            `${form.type} — Yashdeep Palace`,
+                            `Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`,
+                          )}
+                        >
+                          <Mail />
+                          Open email enquiry
+                        </a>
                       </Button>
                     </>
-                  ) : !otpSent && (
-                    <>
-                      <Button variant="hotel" type="submit" disabled={busy}>
-                        {busy ? 'Sending verification code…' : isEmailAlreadyVerified ? 'Send enquiry' : 'Verify Email & Send Enquiry'}<ArrowRight />
-                      </Button>
+                  ) : (
+                    !otpSent && (
+                      <>
+                        <Button variant="hotel" type="submit" disabled={busy}>
+                          {busy
+                            ? "Sending verification code…"
+                            : isEmailAlreadyVerified
+                              ? "Send enquiry"
+                              : "Verify Email & Send Enquiry"}
+                          <ArrowRight />
+                        </Button>
 
-                      <a type="button" className='ml-5 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hotel-button bg-primary text-primary-foreground hover:bg-primary/85 h-9 px-4 py-2 ' href={`tel:${hotel.phone}`}>
-                        {'Call Reception'}
-                      </a>
-                    </>
+                        <a
+                          type="button"
+                          className="ml-5 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hotel-button bg-primary text-primary-foreground hover:bg-primary/85 h-9 px-4 py-2 "
+                          href={`tel:${hotel.phone}`}
+                        >
+                          {"Call Reception"}
+                        </a>
+                      </>
+                    )
                   )}
                 </div>
               </form>
@@ -971,19 +1324,81 @@ export function ContactPage({ type = 'General enquiry' }: { type?: string | unde
           </div>
           <aside className="booking-aside">
             <h2>Speak with reception.</h2>
-            <div className="footer-contact"><Phone /><a href={hotel.phoneLink}>{hotel.phone}</a></div>
-            <div className="footer-contact"><Mail /><a href={`mailto:${hotel.email}`}>{hotel.email}</a></div>
-            <div className="footer-contact"><MapPin /><span>{hotel.address}</span></div>
+            <div className="footer-contact">
+              <Phone />
+              <a href={hotel.phoneLink}>{hotel.phone}</a>
+            </div>
+            <div className="footer-contact">
+              <Mail />
+              <a href={`mailto:${hotel.email}`}>{hotel.email}</a>
+            </div>
+            <div className="footer-contact">
+              <MapPin />
+              <span>{hotel.address}</span>
+            </div>
             <p>Please confirm directions before travelling.</p>
-            <Button variant="outline" asChild><a href={hotel.maps} target="_blank" rel="noreferrer"><MapPin />Find directions</a></Button>
-            <p className="mt-6">For restaurant hours, early check-in, late check-out and specific accessibility requirements, please call reception.</p>
+            <Button variant="outline" asChild>
+              <a href={hotel.maps} target="_blank" rel="noreferrer">
+                <MapPin />
+                Find directions
+              </a>
+            </Button>
+            <p className="mt-6">
+              For restaurant hours, early check-in, late check-out and specific accessibility
+              requirements, please call reception.
+            </p>
           </aside>
         </div>
         <div className="content-width">
-          <iframe title="Yashdeep Palace location search" className="map-frame" src="https://maps.google.com/maps?q=Yashdeep%20Palace%20Khushkhera%20Rajasthan&output=embed" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+          <iframe
+            title="Yashdeep Palace location search"
+            className="map-frame"
+            src="https://maps.google.com/maps?q=Yashdeep%20Palace%20Khushkhera%20Rajasthan&output=embed"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
         </div>
       </section>
     </>
   );
 }
-export function PrivacyPage() { return <><PageBanner title="Privacy & booking enquiries" description="Clear information about your enquiry and reservation." /><section className="section"><div className="content-width privacy-copy"><h2>Your information</h2><p>Information entered here remains in the current page and is used to prepare an email in your own email application. Booking requests submitted after verification are saved securely along with your contact details. Customer accounts store your profile name and verified email. No payment information is collected. Sending the prepared email shares your details with reception.</p><h2>Reservation terms</h2><p>Enquiries are not confirmed reservations. The hotel must confirm availability, the total price including taxes, meal inclusions, cancellation and refund policies, and check-in / check-out times directly. Do not make payments without confirming the recipient and terms with the hotel.</p><h2>External services</h2><p>Email, telephone and map links open external applications. The contact page includes Google Maps, which may process information under Google's own privacy policy. No analytics or advertising tracking has been installed.</p><h2>Questions</h2><p>Contact <a href={`mailto:${hotel.email}`}>{hotel.email}</a> for questions about your enquiry.</p></div></section></>; }
+export function PrivacyPage() {
+  return (
+    <>
+      <PageBanner
+        title="Privacy & booking enquiries"
+        description="Clear information about your enquiry and reservation."
+      />
+      <section className="section">
+        <div className="content-width privacy-copy">
+          <h2>Your information</h2>
+          <p>
+            Information entered here remains in the current page and is used to prepare an email in
+            your own email application. Booking requests submitted after verification are saved
+            securely along with your contact details. Customer accounts store your profile name and
+            verified email. No payment information is collected. Sending the prepared email shares
+            your details with reception.
+          </p>
+          <h2>Reservation terms</h2>
+          <p>
+            Enquiries are not confirmed reservations. The hotel must confirm availability, the total
+            price including taxes, meal inclusions, cancellation and refund policies, and check-in /
+            check-out times directly. Do not make payments without confirming the recipient and
+            terms with the hotel.
+          </p>
+          <h2>External services</h2>
+          <p>
+            Email, telephone and map links open external applications. The contact page includes
+            Google Maps, which may process information under Google's own privacy policy. No
+            analytics or advertising tracking has been installed.
+          </p>
+          <h2>Questions</h2>
+          <p>
+            Contact <a href={`mailto:${hotel.email}`}>{hotel.email}</a> for questions about your
+            enquiry.
+          </p>
+        </div>
+      </section>
+    </>
+  );
+}

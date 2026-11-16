@@ -1,27 +1,27 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { authClient } from '@/lib/auth-client';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth-client";
 
 export function GoogleSignup({ next }: { next?: string | undefined }) {
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   async function signIn() {
     setBusy(true);
-    setError('');
+    setError("");
     try {
-      const result = await authClient.signInWithOAuth('google', {
+      const result = await authClient.signInWithOAuth("google", {
         redirect_uri:
-          next && next !== '/'
+          next && next !== "/"
             ? new URL(`/auth?next=${encodeURIComponent(next)}`, window.location.origin).href
             : `${window.location.origin}/auth`,
       });
       if (result.error) {
-        setError('Google sign-in could not be completed. Please try again or continue with email.');
+        setError("Google sign-in could not be completed. Please try again or continue with email.");
       }
       if (result.redirected) return;
     } catch {
-      setError('Google sign-in could not be completed. Please try again or continue with email.');
+      setError("Google sign-in could not be completed. Please try again or continue with email.");
     } finally {
       setBusy(false);
     }

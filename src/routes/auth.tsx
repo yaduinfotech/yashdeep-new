@@ -1,40 +1,40 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { useEffect, useState, type FormEvent } from 'react';
-import { oauthReturnPath } from '@/lib/oauth-return-path';
-import { useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, LogOut, Gift } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { PageBanner } from '@/components/hotel-layout';
-import { EmailVerification } from '@/components/email-verification';
-import { GoogleSignup } from '@/components/google-signup';
-import { useCustomer } from '@/components/customer-session';
-import { emailSchema, SIGNUP_DISCOUNT_PERCENT } from '@/lib/booking-rules';
-import { pageHead } from '@/lib/hotel';
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState, type FormEvent } from "react";
+import { oauthReturnPath } from "@/lib/oauth-return-path";
+import { useQueryClient } from "@tanstack/react-query";
+import { ArrowRight, LogOut, Gift } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { PageBanner } from "@/components/hotel-layout";
+import { EmailVerification } from "@/components/email-verification";
+import { GoogleSignup } from "@/components/google-signup";
+import { useCustomer } from "@/components/customer-session";
+import { emailSchema, SIGNUP_DISCOUNT_PERCENT } from "@/lib/booking-rules";
+import { pageHead } from "@/lib/hotel";
 
-export const Route = createFileRoute('/auth')({
+export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): { next?: string } =>
-    typeof s['next'] === 'string' ? { next: oauthReturnPath(s['next']) } : {},
+    typeof s["next"] === "string" ? { next: oauthReturnPath(s["next"]) } : {},
   staticData: { sitemap: false },
   head: () =>
     pageHead(
-      'Customer Signup & Sign In',
-      'Create your Yashdeep Palace customer profile and get extra 10% off on your first visit.'
+      "Customer Signup & Sign In",
+      "Create your Yashdeep Palace customer profile and get extra 10% off on your first visit.",
     ),
   component: CustomerAccount,
 });
 
 function CustomerAccount() {
   const { user, ready, signOut } = useCustomer();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const navigate = useNavigate();
   const query = useQueryClient();
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const { next } = Route.useSearch();
 
   useEffect(() => {
-    if (ready && user && next && next !== '/') {
+    if (ready && user && next && next !== "/") {
       window.location.assign(next);
     }
   }, [ready, user, next]);
@@ -42,10 +42,10 @@ function CustomerAccount() {
   function submit(e: FormEvent) {
     e.preventDefault();
     if (name.trim().length < 2 || !emailSchema.safeParse(email).success) {
-      setError('Please enter your full name and a valid email.');
+      setError("Please enter your full name and a valid email.");
       return;
     }
-    setError('');
+    setError("");
     setSubmitted(true);
   }
 
@@ -53,17 +53,17 @@ function CustomerAccount() {
     await query.cancelQueries();
     query.clear();
     signOut();
-    navigate({ to: '/auth', replace: true });
+    navigate({ to: "/auth", replace: true });
   }
 
   return (
     <>
       <PageBanner
-        title={user ? 'Your customer account' : 'A warm welcome, just for you.'}
+        title={user ? "Your customer account" : "A warm welcome, just for you."}
         description={
           user
-            ? 'Your verified email and customer profile.'
-            : 'Create a customer profile or sign in with Google or email.'
+            ? "Your verified email and customer profile."
+            : "Create a customer profile or sign in with Google or email."
         }
         eyebrow="Yashdeep Palace guests"
       />
@@ -78,7 +78,7 @@ function CustomerAccount() {
                 <h2 className="text-4xl">Welcome to Yashdeep Palace.</h2>
                 <p>{user.email}</p>
                 <p className="rate-note">
-                  Your email is {user.email_confirmed_at ? 'verified' : 'awaiting verification'}.
+                  Your email is {user.email_confirmed_at ? "verified" : "awaiting verification"}.
                 </p>
                 <div className="wizard-actions">
                   <Button variant="hotel" asChild>
@@ -136,7 +136,7 @@ function CustomerAccount() {
                     <ArrowRight />
                   </Button>
                   <p className="rate-note mt-4">
-                    Signup or login using your email address to access your customer account.{' '}
+                    Signup or login using your email address to access your customer account.{" "}
                     <Link to="/privacy">Privacy information</Link>
                   </p>
                 </div>

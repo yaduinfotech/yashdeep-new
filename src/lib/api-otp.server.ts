@@ -1,5 +1,5 @@
-import { error } from 'console';
-import { sanitizePhone } from './sanitizer';
+import { error } from "console";
+import { sanitizePhone } from "./sanitizer";
 
 interface OtpEntry {
   code: string;
@@ -31,11 +31,11 @@ export class VerifiedTokenStore {
   set(token: string, data: { phone?: string; email?: string; expiresAt?: number }): void {
     const now = Date.now();
     const entry: VerifiedTokenEntry = {
-      phone: data.phone || '',
-      email: data.email || '',
+      phone: data.phone || "",
+      email: data.email || "",
       token,
       createdAt: now,
-      expiresAt: data.expiresAt || (now + 20 * 60 * 1000), // 20 minutes default
+      expiresAt: data.expiresAt || now + 20 * 60 * 1000, // 20 minutes default
     };
     this.store.set(token, entry);
     this.latestToken = token;
@@ -130,19 +130,21 @@ function checkRateLimit(phone: string): boolean {
  * Sends an OTP challenge to the guest's mobile phone via HMS API endpoint.
  * Dispatches to /api/otp/mobile/send, with fallback to Twilio or server challenge store.
  */
-export async function sendOtpChallenge(rawPhone: string): Promise<{ ok: boolean; message: string }> {
+export async function sendOtpChallenge(
+  rawPhone: string,
+): Promise<{ ok: boolean; message: string }> {
   const phone = sanitizePhone(rawPhone);
   if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
-    throw new Error('Please enter a valid mobile number with country code.');
+    throw new Error("Please enter a valid mobile number with country code.");
   }
 
   if (!checkRateLimit(phone)) {
-    throw new Error('Too many OTP requests for this number. Please wait 15 minutes.');
+    throw new Error("Too many OTP requests for this number. Please wait 15 minutes.");
   }
 
   // 1. Dispatch via HMS API Gateway (/api/otp/mobile/send)
   try {
-    const { hmsSendMobileOtp } = await import('./hms-gateway.server');
+    const { hmsSendMobileOtp } = await import("./hms-gateway.server");
     const hmsRes = await hmsSendMobileOtp(phone);
     if (hmsRes.ok) {
       return {
@@ -150,10 +152,11 @@ export async function sendOtpChallenge(rawPhone: string): Promise<{ ok: boolean;
         message: hmsRes.message || `OTP sent to ${phone}. Valid for 10 minutes.`,
       };
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const err = e as Error;
     return {
       ok: false,
-      message: e.message || `OTP sent to ${phone}. Valid for 10 minutes.`,
+      message: err?.message || `OTP sent to ${phone}. Valid for 10 minutes.`,
     };
   }
   return {
@@ -168,37 +171,28 @@ export async function sendOtpChallenge(rawPhone: string): Promise<{ ok: boolean;
  */
 export async function verifyOtpChallenge(
   rawPhone: string,
-  code: string
-): Promise<{ ok: boolean; phone: string; verificationToken: string, message: string }> {
+  code: string,
+): Promise<{ ok: boolean; phone: string; verificationToken: string; message: string }> {
   const phone = sanitizePhone(rawPhone);
   const cleanCode = code.trim();
 
   // 1. Verify via HMS API Gateway (/api/otp/mobile/verify)
-  try {
-    const { hmsVerifyMobileOtp } = await import('./hms-gateway.server');
-    const hmsRes = await hmsVerifyMobileOtp(phone, cleanCode);
-    if (hmsRes.ok && hmsRes.verificationToken) {
-      // Register token in verifiedTokenStore
-      verifiedTokenStore.set(hmsRes.verificationToken, {
-        phone,
-        expiresAt: Date.now() + TOKEN_EXPIRY_MS,
-      });
-      return {
-        ok: true,
-        phone,
-        verificationToken: hmsRes.verificationToken,
-        message: "OTP Verified"
-      };
-    } else {
-      throw new Error(hmsRes.message)
-    }
-  } catch (e: any) {
-    return {
-      ok: false,
+  const { hmsVerifyMobileOtp } = await import("./hms-gateway.server");
+  const hmsRes = await hmsVerifyMobileOtp(phone, cleanCode);
+  if (hmsRes.ok && hmsRes.verificationToken) {
+    // Register token in verifiedTokenStore
+    verifiedTokenStore.set(hmsRes.verificationToken, {
       phone,
-      verificationToken: '',
-      message: e.message
-    }
+      expiresAt: Date.now() + TOKEN_EXPIRY_MS,
+    });
+    return {
+      ok: true,
+      phone,
+      verificationToken: hmsRes.verificationToken,
+      message: "OTP Verified",
+    };
+  } else {
+    throw new Error(hmsRes.message || "Invalid OTP code");
   }
 }
 

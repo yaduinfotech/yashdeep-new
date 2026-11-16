@@ -1,9 +1,9 @@
-import { hotel, rooms } from '../hotel';
+import { hotel, rooms } from "../hotel";
 
 export async function readHotelProfile() {
   return {
     ok: true,
-    source: 'Yashdeep Palace Information',
+    source: "Yashdeep Palace Information",
     name: hotel.name,
     address: hotel.address,
     area: hotel.area,
@@ -16,6 +16,6 @@ export async function readHotelProfile() {
       bed: r.bed,
       price: r.price,
     })),
-    note: 'Listing information only; reception confirms room rates, availability and booking terms.',
+    note: "Listing information only; reception confirms room rates, availability and booking terms.",
   };
 }

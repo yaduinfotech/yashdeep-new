@@ -1,17 +1,17 @@
-import { describe, expect, it } from 'vitest';
-import { calculateStayPricing } from '@/lib/hotel';
-import { sendOtpChallenge, verifyOtpChallenge } from '@/lib/api-otp.server';
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
+import { calculateStayPricing } from "@/lib/hotel";
+import { sendOtpChallenge, verifyOtpChallenge } from "@/lib/api-otp.server";
 
-describe('API-Driven Booking Flow & Amount Calculation', () => {
-  describe('1. Live Stay Pricing Calculation', () => {
-    it('calculates nights, 5% GST, and total for Deluxe Room (₹1,600/night)', () => {
+describe("API-Driven Booking Flow & Amount Calculation", () => {
+  describe("1. Live Stay Pricing Calculation", () => {
+    it("calculates nights, 5% GST, and total for Deluxe Room (₹1,600/night)", () => {
       const stay = {
-        checkIn: '2026-12-01',
-        checkOut: '2026-12-03', // 2 nights
+        checkIn: "2026-12-01",
+        checkOut: "2026-12-03", // 2 nights
         adults: 2,
         children: 0,
         rooms: 1,
-        room: 'Deluxe Room',
+        room: "Deluxe Room",
       };
 
       const pricing = calculateStayPricing(stay, false);
@@ -25,14 +25,14 @@ describe('API-Driven Booking Flow & Amount Calculation', () => {
       expect(pricing.total).toBe(3360);
     });
 
-    it('calculates pricing with 10% welcome discount applied', () => {
+    it("calculates pricing with 10% welcome discount applied", () => {
       const stay = {
-        checkIn: '2026-12-01',
-        checkOut: '2026-12-03', // 2 nights
+        checkIn: "2026-12-01",
+        checkOut: "2026-12-03", // 2 nights
         adults: 2,
         children: 0,
         rooms: 1,
-        room: 'Deluxe Room',
+        room: "Deluxe Room",
       };
 
       const pricing = calculateStayPricing(stay, true);
@@ -42,14 +42,14 @@ describe('API-Driven Booking Flow & Amount Calculation', () => {
       expect(pricing.total).toBe(3024); // 3360 - 336
     });
 
-    it('calculates pricing for Deluxe Room With Breakfast (₹2,000/night) with multiple rooms', () => {
+    it("calculates pricing for Deluxe Room With Breakfast (₹2,000/night) with multiple rooms", () => {
       const stay = {
-        checkIn: '2026-12-10',
-        checkOut: '2026-12-13', // 3 nights
+        checkIn: "2026-12-10",
+        checkOut: "2026-12-13", // 3 nights
         adults: 4,
         children: 1,
         rooms: 2,
-        room: 'Deluxe Room With Breakfast',
+        room: "Deluxe Room With Breakfast",
       };
 
       const pricing = calculateStayPricing(stay, false);
@@ -63,26 +63,66 @@ describe('API-Driven Booking Flow & Amount Calculation', () => {
     });
   });
 
-  describe('2. Standalone API-Driven Mobile OTP', () => {
-    it('sends an OTP challenge and verifies with correct 6-digit code', async () => {
-      const phone = '9876543210';
+  describe("2. Standalone API-Driven Mobile OTP", () => {
+    beforeEach(() => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+          const urlStr = String(url);
+          const body = init?.body ? JSON.parse(String(init.body)) : {};
+          if (urlStr.includes("/api/otp/mobile/send")) {
+            return {
+              ok: true,
+              status: 200,
+              json: async () => ({ success: true, message: "OTP sent" }),
+            };
+          }
+          if (urlStr.includes("/api/otp/mobile/verify")) {
+            if (body.code === "123456") {
+              return {
+                ok: true,
+                status: 200,
+                json: async () => ({ verified: true, verificationToken: "vtok_mock_123" }),
+              };
+            }
+            return {
+              ok: false,
+              status: 400,
+              json: async () => ({ success: false, message: "Invalid OTP code" }),
+            };
+          }
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({}),
+          };
+        }),
+      );
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("sends an OTP challenge and verifies with correct 6-digit code", async () => {
+      const phone = "9876543210";
       const sendRes = await sendOtpChallenge(phone);
       expect(sendRes.ok).toBe(true);
 
-      const verifyRes = await verifyOtpChallenge(phone, '123456');
+      const verifyRes = await verifyOtpChallenge(phone, "123456");
       expect(verifyRes.ok).toBe(true);
-      expect(verifyRes.phone).toBe('+919876543210');
+      expect(verifyRes.phone).toBe("+919876543210");
     });
 
-    it('rejects invalid OTP code', async () => {
-      const phone = '9812345678';
+    it("rejects invalid OTP code", async () => {
+      const phone = "9812345678";
       await sendOtpChallenge(phone);
 
-      await expect(verifyOtpChallenge(phone, '000000')).rejects.toThrow('Invalid OTP code');
+      await expect(verifyOtpChallenge(phone, "000000")).rejects.toThrow("Invalid OTP code");
     });
 
-    it('rejects malformed phone number', async () => {
-      await expect(sendOtpChallenge('123')).rejects.toThrow('valid mobile number');
+    it("rejects malformed phone number", async () => {
+      await expect(sendOtpChallenge("123")).rejects.toThrow("valid mobile number");
     });
   });
 });

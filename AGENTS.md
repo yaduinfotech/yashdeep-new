@@ -1,6 +1,7 @@
 # Yashdeep Palace - Developer & Agent Guidelines
 
 ## 1. Tech Stack & Core Architecture
+
 - **Framework & Runtime**: React 19, TanStack Start, Nitro server engine, Vite.
 - **Routing & State**: TanStack Router (file-based routing under `src/routes/`), TanStack Query.
 - **Styling & UI**: Tailwind CSS v4, Radix UI primitives, Lucide React icons, global semantic tokens in `src/styles.css`.
@@ -16,16 +17,19 @@
 ## 2. Non-Negotiable Application Invariants
 
 ### Booking & Reservations
+
 - **Request vs. Reservation**: A booking request saved in HMS using API endpoint.
 - **Four-Step Wizard**: All guest bookings use the 4-step wizard (`BookingWizard`): Room Selection -> Guest Details -> Contact Verification -> Review & Submit.
 - **Dual Server-Verified Contacts**: Reject booking submissions unless BOTH the exact email and mobile number are verified on the server.
 - **Rate Limits & Safeguards**: Atomically enforce custom database request counters (`consume_request_limit`) on verification sends, verification attempts, and submissions.
 
 ### Hotel Facts & Assets
+
 - **Single Source of Truth**: Keep hotel facts, contacts, room specifications, FAQs, and asset pointers in `src/lib/hotel.ts`. Never hardcode hotel contact numbers or room data in individual page components.
 - **Asset References**: Load image assets through JSON manifests (`src/assets/*.asset.json`) referencing `/public/assets/`.
 
 ### TanStack Router & Routing
+
 - **File-Based Routing**: All routes reside in `src/routes/`. The single root layout is `src/routes/__root.tsx`.
 - **Prohibited Patterns**: Do NOT create `src/pages/`, `src/routes/_app/index.tsx`, or `app/layout.tsx` (Next.js/Remix conventions).
 - **Dynamic Segments**: Use bare `$` (e.g., `rooms.$room.tsx`, splats `files/$.tsx`), never curly braces.
@@ -33,10 +37,12 @@
 - **Sitemap**: Keep sitemap discovery router-derived (`src/lib/sitemap.ts` and `src/routes/sitemap[.]xml.ts`) with explicit per-route decisions (`staticData: { sitemap: boolean }`), enumerating rooms from `src/lib/hotel.ts`. Never expose account or API routes.
 
 ### Auth, Sessions & Prompts
+
 - **Single Root Subscriber**: Mount `<CustomerSession>` and `<FrontDeskPrompt>` only once at the root layout (`__root.tsx`) to avoid competing auth listeners and duplicate prompts during page transitions.
 - **OAuth Redirection**: Google signup uses the managed OAuth helper and redirects to `/account`; root session subscriber hydrates user state; database triggers automatically create private profiles.
 
 ### AI Booking Assistant & MCP
+
 - **Scope & Boundaries**: The AI assistant (`/api/booking-assistant`) guides users, validates stay drafts (`prepareAgentStay`), and provides hotel information. It NEVER bypasses contact verification or directly creates confirmed bookings.
 - **Conversation Storage**: AI conversation history is stored strictly client-side in browser `localStorage` (`yashdeep-booking-conversation`).
 - **Floating Concierge**: Mount one floating assistant (`FloatingBookingAssistant`) at root and embed the existing booking wizard inside it for booking actions.
@@ -51,6 +57,7 @@
 ---
 
 ## 4. Development & Verification Commands
+
 - `npm run dev`: Start Vite development server.
 - `npm run build`: Compile and build production bundle.
 - `npm test`: Run full Vitest suite (must pass before merging any changes).

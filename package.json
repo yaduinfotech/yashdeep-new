@@ -13,7 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:hms": "tsx scripts/test-live-hms.ts",
-    "start": "HOST=0.0.0.0 node .output/server/index.mjs"
+    "start": "node .output/server/index.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"

@@ -11,10 +11,10 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { HotelHeader, HotelFooter } from '@/components/hotel-layout';
-import { CustomerSession } from '@/components/customer-session';
-import { FrontDeskPrompt } from '@/components/front-desk-prompt';
-import { FloatingBookingAssistant } from '@/components/floating-booking-assistant';
+import { HotelHeader, HotelFooter } from "@/components/hotel-layout";
+import { CustomerSession } from "@/components/customer-session";
+import { FrontDeskPrompt } from "@/components/front-desk-prompt";
+import { FloatingBookingAssistant } from "@/components/floating-booking-assistant";
 
 function NotFoundComponent() {
   return (
@@ -92,10 +92,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
-      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
-      { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@400;500;600&display=swap' },
-      { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Google+Sans:wght@500&display=swap' },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@400;500;600&display=swap",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Google+Sans:wght@500&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,
@@ -130,7 +136,9 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <CustomerSession>
         <HotelHeader />
-        <main id="main-content"><Outlet /></main>
+        <main id="main-content">
+          <Outlet />
+        </main>
         <HotelFooter />
         <FrontDeskPrompt />
         <FloatingBookingAssistant />

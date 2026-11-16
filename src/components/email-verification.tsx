@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { useServerFn } from '@tanstack/react-start';
-import { Mail, ShieldCheck } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { sendEmailCode, verifyEmailCode } from '@/lib/customer.functions';
-import { useCustomer } from './customer-session';
+import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { Mail, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { sendEmailCode, verifyEmailCode } from "@/lib/customer.functions";
+import { useCustomer } from "./customer-session";
 
 export function EmailVerification({
   email,
@@ -18,11 +18,13 @@ export function EmailVerification({
   const send = useServerFn(sendEmailCode);
   const verify = useServerFn(verifyEmailCode);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
-  const [code, setCode] = useState('');
+  const [message, setMessage] = useState("");
+  const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
 
-  const verified = Boolean(user?.email_confirmed_at && user.email?.toLowerCase() === email.toLowerCase());
+  const verified = Boolean(
+    user?.email_confirmed_at && user.email?.toLowerCase() === email.toLowerCase(),
+  );
 
   async function request() {
     setBusy(true);
@@ -31,7 +33,7 @@ export function EmailVerification({
       setMessage(result.message);
       if (result.ok) setSent(true);
     } catch {
-      setMessage('Please enter a valid email and name, or try again later.');
+      setMessage("Please enter a valid email and name, or try again later.");
     } finally {
       setBusy(false);
     }
@@ -46,7 +48,7 @@ export function EmailVerification({
         setUser(result.session.user);
       }
     } catch {
-      setMessage('Enter the 6–8 digit code from your email.');
+      setMessage("Enter the 6–8 digit code from your email.");
     } finally {
       setBusy(false);
     }
@@ -66,11 +68,9 @@ export function EmailVerification({
       </div>
       {!verified && (
         <>
-          <p className="rate-note">
-            Verify {email}. Check your inbox for your verification code.
-          </p>
+          <p className="rate-note">Verify {email}. Check your inbox for your verification code.</p>
           <Button variant="outline" disabled={busy} onClick={request}>
-            {busy ? 'Please wait…' : sent ? 'Resend email' : 'Send email verification'}
+            {busy ? "Please wait…" : sent ? "Resend email" : "Send email verification"}
           </Button>
           {sent && (
             <div className="otp-controls">
@@ -82,7 +82,7 @@ export function EmailVerification({
                   autoComplete="one-time-code"
                   maxLength={8}
                   value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                 />
               </div>
               <Button variant="hotel" disabled={busy || code.length < 6} onClick={check}>
