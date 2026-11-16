@@ -490,6 +490,84 @@ export function DiningPage() {
           </div>
         </div>
 
+        {/* Curated Sample Menu Highlights with Interactive Tabs */}
+        <div className="content-width mt-16">
+          <div className="section-heading mb-6">
+            <div>
+              <div className="eyebrow">Fresh from the kitchen</div>
+              <h2>Sample Menu Highlights</h2>
+            </div>
+            <div className="filter-tabs mt-2" aria-label="Menu categories">
+              {diningInfo.menuHighlights.map((cat, idx) => (
+                <Button 
+                  key={cat.category}
+                  variant={activeMenuTab === idx ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setActiveMenuTab(idx)}
+                >
+                  {cat.category}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Active Tab Dishes Grid */}
+          {(() => {
+            const currentCat = diningInfo.menuHighlights[activeMenuTab] ?? diningInfo.menuHighlights[0];
+            return (
+              <div className="p-6 rounded-xl bg-card border border-border shadow-xs">
+                <div className="mb-4 pb-3 border-b border-border/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h3 className="font-serif text-xl font-medium">
+                      {currentCat.category}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {currentCat.description}
+                    </p>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground bg-muted/60 px-2.5 py-1 rounded">
+                    Prepared fresh to order
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {currentCat.items.map(dish => (
+                    <div key={dish.name} className="p-4 rounded-lg bg-muted/30 border border-border/60 flex justify-between items-start gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm text-foreground">{dish.name}</span>
+                          {dish.tag && (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary/15 text-primary">
+                              {dish.tag}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-normal">
+                          {dish.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle className="size-4 text-emerald-600" />
+                    100% RO Purified Drinking Water · Separate Vegetarian Cooking Utensils
+                  </span>
+                  <a 
+                    href="https://zeesto.ai.studio/menu/yashdeep-palace" 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="text-primary hover:underline font-medium inline-flex items-center gap-1"
+                  >
+                    View full printable / online menu <ArrowRight className="size-3" />
+                  </a>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
 
         {/* Corporate & Group Dining Banner */}
         <div className="content-width mt-16 p-8 rounded-2xl bg-secondary text-hero-foreground flex flex-col md:flex-row items-center justify-between gap-8">
