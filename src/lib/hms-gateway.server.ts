@@ -1,6 +1,7 @@
 import { sanitizeObject, sanitizeText, sanitizeEmail, sanitizePhone } from "./sanitizer";
 import { rooms } from "./hotel.ts";
 import { verifiedTokenStore, isEmailVerificationTokenValid } from "./api-otp.server";
+import { error } from "node:console";
 
 export { verifiedTokenStore };
 export interface HmsResponse<T = unknown> {
@@ -87,8 +88,14 @@ export async function dispatchHmsRequest<T = Record<string, unknown>>(
         const cleanPhone = sanitizePhone(rawPhone);
         authToken = verifiedTokenStore.getTokenFor(cleanPhone);
       } catch {
-        // ignore
+        return {
+          ok: false,
+          message: "Authorization token not found for phone number.",
+          statusCode: 401,
+        };
       }
+    } else {
+      throw new Error("Authorization Token: " + JSON.stringify(authToken) + "Headers: " + JSON.stringify(headers) + "Target URL: " + JSON.stringify(targetUrl) + "Sanitized Payload: " + JSON.stringify(sanitizedPayload) + "Base URL: " + JSON.stringify(baseUrl) + "Raw Payload: " + JSON.stringify(rawPayload));
     }
   }
   if (!authToken && rawPayload.email) {
@@ -101,7 +108,7 @@ export async function dispatchHmsRequest<T = Record<string, unknown>>(
   if (authToken) {
     headers["Authorization"] = `Bearer ${authToken}`;
   }
-
+  // throw new Error("Headers: " + JSON.stringify(headers) + "Sanitized Payload: " + JSON.stringify(sanitizedPayload));
   try {
     const res = await fetch(targetUrl, {
       method: "POST",
@@ -109,6 +116,7 @@ export async function dispatchHmsRequest<T = Record<string, unknown>>(
       body: JSON.stringify(sanitizedPayload),
       signal: controller.signal,
     });
+
 
     const json = await res.json().catch(() => null);
     if (!res.ok) {
@@ -216,7 +224,7 @@ export interface EnquirySubmissionData {
   email: string;
   phone?: string;
   type:
-    "General enquiry" | "Restaurant enquiry" | "Meeting or event enquiry" | "Reservation enquiry";
+  "General enquiry" | "Restaurant enquiry" | "Meeting or event enquiry" | "Reservation enquiry";
   message: string;
   verificationToken?: string;
 }
@@ -271,12 +279,15 @@ export async function hmsSubmitFeedback(payload: HmsFeedbackPayload) {
 /**
  * Specialized helper: Validates a coupon code via /api/coupons/validate on HMS
  */
-export async function hmsValidateCoupon(rawCode: string, rawEmail?: string) {
+export async function hmsValidateCoupon(rawCode: string, rawEmail?: string, subtotal?: number) {
   const code = sanitizeText(rawCode, 50).toUpperCase();
   const email = rawEmail ? sanitizeEmail(rawEmail) : undefined;
-
   if (!code) {
     return { ok: false, message: "Please enter a coupon code." };
+  }
+
+  if (!subtotal) {
+    return { ok: false, message: "Please select a valid booking." };
   }
 
   // Attempt to validate with remote HMS API
@@ -285,24 +296,25 @@ export async function hmsValidateCoupon(rawCode: string, rawEmail?: string) {
       valid?: boolean;
       discountPercent?: number;
       message?: string;
-    }>("/api/coupons/validate", { code, email, source: "website" });
+    }>("/api/coupons/validate", { "coupon": code, email, source: "website", subtotal });
 
-    if (res.ok && (res.data?.valid || res.data?.discountPercent)) {
+    // throw new Error(JSON.stringify(res) || 'Invalid or expired coupon code. Please check the code sent to your email.');
+    if (res.ok) {
       return {
         ok: true,
         code,
-        discountPercent: res.data.discountPercent || 10,
-        message: res.data.message,
+        discountPercent: res?.data?.discountPercent,
+        message: res?.data?.message,
       };
+    } else {
+      throw new Error(res?.message || 'Invalid or expired coupon code. Please check the code sent to your email.')
     }
-  } catch (e) {
-    console.warn("[Coupon] HMS API validation failed:", e);
+  } catch (e: any) {
+    return {
+      ok: false,
+      message: e.message || 'Invalid or expired coupon code. Please check the code sent to your email.'
+    }
   }
-
-  return {
-    ok: false,
-    message: "Invalid or expired coupon code. Please check the code sent to your email.",
-  };
 }
 
 export interface HmsOtpSendResponse {

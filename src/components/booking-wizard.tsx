@@ -216,6 +216,7 @@ export function BookingPage({
         data: {
           code: couponCode.trim(),
           email: guest.email || user?.email || undefined,
+          subtotal: pricing.total,
         },
       });
       if (res.ok) {

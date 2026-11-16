@@ -124,9 +124,10 @@ export const validateCouponApi = createServerFn({ method: "POST" })
     z.object({
       code: z.string().trim().min(2, "Enter a valid coupon code").max(50),
       email: z.string().trim().email().optional(),
+      subtotal: z.number(),
     }),
   )
   .handler(async ({ data }) => {
     const { hmsValidateCoupon } = await import("./hms-gateway.server");
-    return hmsValidateCoupon(data.code, data.email);
+    return hmsValidateCoupon(data.code, data.email, data.subtotal);
   });
