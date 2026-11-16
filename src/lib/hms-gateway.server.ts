@@ -199,7 +199,7 @@ export interface EnquirySubmissionData {
   email: string;
   phone?: string;
   type:
-  "General enquiry" | "Restaurant enquiry" | "Meeting or event enquiry" | "Reservation enquiry";
+    "General enquiry" | "Restaurant enquiry" | "Meeting or event enquiry" | "Reservation enquiry";
   message: string;
   verificationToken?: string;
 }
@@ -284,8 +284,8 @@ export async function hmsValidateCoupon(rawCode: string, rawEmail?: string, subt
     } else {
       throw new Error(
         res?.data?.message ||
-        res?.message ||
-        "Invalid or expired coupon code. Please check the code sent to your email.",
+          res?.message ||
+          "Invalid or expired coupon code. Please check the code sent to your email.",
       );
     }
   } catch (e: unknown) {
