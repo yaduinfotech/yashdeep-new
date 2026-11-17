@@ -8,6 +8,7 @@ export async function readHotelProfile() {
     address: hotel.address,
     area: hotel.area,
     phone: hotel.phone,
+    phone2: hotel.phone2,
     email: hotel.email,
     maps: hotel.maps,
     rooms: rooms.map((r) => ({

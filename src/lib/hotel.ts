@@ -7,10 +7,11 @@ import reception from "@/assets/reception.asset.json";
 export const hotel = {
   name: "Yashdeep Palace",
   tagline: "Comfort. Hospitality. Elegance.",
-  phone: "+91 82220 20699",
-  phoneLink: "tel:+918222020699",
+  phone: "+91 82220 20599",
+  phone2: "+91 82220 20699",
+  phoneLink: "tel:+918222020599",
   whatsapp:
-    "https://wa.me/918222020699?text=Hello%20Yashdeep%20Palace%2C%20I%20would%20like%20help%20planning%20my%20stay.",
+    "https://wa.me/918222020599?text=Hello%20Yashdeep%20Palace%2C%20I%20would%20like%20help%20planning%20my%20stay.",
   email: "reception@yashdeeppalace.com",
   area: "Khushkhera, Rajasthan",
   address: "Opposite Honda Car Gate No. 4, RA 403, Karuli Industrial Area, Khushkhera, Rajasthan",

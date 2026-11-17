@@ -41,13 +41,13 @@ describe("Sanitizer utilities", () => {
 
   describe("sanitizePhone", () => {
     it("formats 10-digit Indian phone numbers with +91", () => {
-      expect(sanitizePhone("8222020699")).toBe("+918222020699");
-      expect(sanitizePhone("822-202-0699")).toBe("+918222020699");
-      expect(sanitizePhone("(822) 202 0699")).toBe("+918222020699");
+      expect(sanitizePhone("8222020599")).toBe("+918222020599");
+      expect(sanitizePhone("822-202-0699")).toBe("+918222020599");
+      expect(sanitizePhone("(822) 202 0699")).toBe("+918222020599");
     });
 
     it("preserves existing country code", () => {
-      expect(sanitizePhone("+918222020699")).toBe("+918222020699");
+      expect(sanitizePhone("+918222020599")).toBe("+918222020599");
       expect(sanitizePhone("+15551234567")).toBe("+15551234567");
     });
   });
@@ -69,7 +69,7 @@ describe("Sanitizer utilities", () => {
       const payload = {
         name: "<b>John Doe</b>",
         guestEmail: "  JOHN@EXAMPLE.COM ",
-        mobileNumber: "8222020699",
+        mobileNumber: "8222020599",
         checkIn: " 2026-12-01 ",
         notes: "<p>Quiet room please</p>",
         tags: ["<i>VIP</i>", " Honeymoon "],
@@ -80,7 +80,7 @@ describe("Sanitizer utilities", () => {
       expect(sanitized).toEqual({
         name: "John Doe",
         guestEmail: "john@example.com",
-        mobileNumber: "+918222020699",
+        mobileNumber: "+918222020599",
         checkIn: "2026-12-01",
         notes: "Quiet room please",
         tags: ["VIP", "Honeymoon"],

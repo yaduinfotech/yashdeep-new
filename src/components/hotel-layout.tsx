@@ -153,7 +153,8 @@ export function HotelFooter() {
               </div>
               <div className="footer-contact">
                 <Phone />
-                <a href={hotel.phoneLink}>{hotel.phone}</a>
+                <a href={hotel.phoneLink}>{hotel.phone}</a> /
+                <a href={hotel.phone2}>{hotel.phone2}</a>
               </div>
               <div className="footer-contact">
                 <Mail />

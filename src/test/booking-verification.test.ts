@@ -11,7 +11,7 @@ describe("Customer booking requirements", () => {
   it("prompts after exactly 40 seconds", () => expect(FRONT_DESK_PROMPT_MS).toBe(40000));
   it("sets signup offer to an extra 10 percent", () => expect(SIGNUP_DISCOUNT_PERCENT).toBe(10));
   it("uses the owner-confirmed WhatsApp number", () =>
-    expect(hotel.whatsapp).toContain("wa.me/918222020699?"));
+    expect(hotel.whatsapp).toContain("wa.me/918222020599?"));
   it("requires both verified email and mobile", () => {
     expect(
       hasVerifiedContacts(
@@ -39,7 +39,7 @@ describe("Customer booking requirements", () => {
     ).toBe(true);
   });
   it("normalizes Indian mobile numbers", () =>
-    expect(phoneSchema.parse("8222020699")).toBe("+918222020699"));
+    expect(phoneSchema.parse("8222020599")).toBe("+918222020599"));
   it("rejects malformed phone input", () =>
     expect(phoneSchema.safeParse("not a number").success).toBe(false));
   it("limits verification to five attempts per fifteen minutes", () =>

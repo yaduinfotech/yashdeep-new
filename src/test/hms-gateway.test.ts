@@ -32,7 +32,7 @@ describe("HMS Centralized API Gateway", () => {
 
   it("uses bearer token from verifiedTokenStore when available", async () => {
     delete process.env["HMS_BEARER_TOKEN"];
-    verifiedTokenStore.set("vtok_store_test_abc", { phone: "+918222020699" });
+    verifiedTokenStore.set("vtok_store_test_abc", { phone: "+918222020599" });
 
     let capturedHeaders: Record<string, string> = {};
     global.fetch = vi.fn().mockImplementation(async (url, init) => {
@@ -44,7 +44,7 @@ describe("HMS Centralized API Gateway", () => {
       };
     });
 
-    const res = await dispatchHmsRequest("/api/test", { phone: "8222020699" });
+    const res = await dispatchHmsRequest("/api/test", { phone: "8222020599" });
     expect(res.ok).toBe(true);
     expect(capturedHeaders["Authorization"]).toBe("Bearer vtok_store_test_abc");
   });
@@ -115,7 +115,7 @@ describe("HMS Centralized API Gateway", () => {
       guest: {
         name: "Jane Doe",
         email: "jane@example.com",
-        phone: "8222020699",
+        phone: "8222020599",
         requests: "Early check-in",
       },
       stay: {
@@ -133,7 +133,7 @@ describe("HMS Centralized API Gateway", () => {
     expect(res.reference).toBe("YDP-2026-1234");
     expect(capturedUrl).toBe("https://hms.yashdeeppalace.com/api/bookings/new");
     expect(capturedBody.guestName).toBe("Jane Doe");
-    expect(capturedBody.phone).toBe("+918222020699");
+    expect(capturedBody.phone).toBe("+918222020599");
     expect(capturedBody.checkIn).toBe("2026-12-01");
     expect(capturedBody.roomPreference).toBe("Luxury Double Room");
   });
@@ -155,7 +155,7 @@ describe("HMS Centralized API Gateway", () => {
     const res = await hmsSubmitEnquiry({
       name: "Alice",
       email: "alice@example.com",
-      phone: "8222020699",
+      phone: "8222020599",
       type: "Meeting or event enquiry",
       message: "Need banquet hall for 50 people.",
     });
@@ -212,11 +212,11 @@ describe("HMS Centralized API Gateway", () => {
         };
       });
 
-      const res = await hmsSendMobileOtp("8222020699");
+      const res = await hmsSendMobileOtp("8222020599");
       expect(res.ok).toBe(true);
       expect(res.message).toBe("OTP sent to mobile phone.");
       expect(capturedUrl).toBe("https://hms.yashdeeppalace.com/api/otp/mobile/send");
-      expect(capturedBody.phone).toBe("+918222020699");
+      expect(capturedBody.phone).toBe("+918222020599");
       expect(capturedBody.type).toBe("mobile");
     });
 
@@ -237,12 +237,12 @@ describe("HMS Centralized API Gateway", () => {
         };
       });
 
-      const res = await hmsVerifyMobileOtp("8222020699", "123456");
+      const res = await hmsVerifyMobileOtp("8222020599", "123456");
       expect(res.ok).toBe(true);
-      expect(res.phone).toBe("+918222020699");
+      expect(res.phone).toBe("+918222020599");
       expect(res.verificationToken).toBe("vtok_hms_verified_123");
       expect(capturedUrl).toBe("https://hms.yashdeeppalace.com/api/otp/mobile/verify");
-      expect(capturedBody.phone).toBe("+918222020699");
+      expect(capturedBody.phone).toBe("+918222020599");
       expect(capturedBody.code).toBe("123456");
     });
 

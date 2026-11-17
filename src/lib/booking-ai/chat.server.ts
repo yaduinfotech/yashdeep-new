@@ -75,6 +75,7 @@ export async function handleBookingChat(request: Request) {
         error:
           "The booking concierge is temporarily unavailable. Please call reception at " +
           hotel.phone +
+          "/" + hotel.phone2 +
           ".",
       },
       { status: 503 },

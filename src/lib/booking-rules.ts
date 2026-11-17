@@ -1,5 +1,5 @@
 import { z } from "zod";
-export const FRONT_DESK_PROMPT_MS = 40_000;
+export const FRONT_DESK_PROMPT_MS = 100_000;
 export const SIGNUP_DISCOUNT_PERCENT = 10;
 export const LIMITS = {
   email: { max: 3, seconds: 900 },

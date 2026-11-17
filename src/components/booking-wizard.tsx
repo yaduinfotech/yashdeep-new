@@ -393,12 +393,12 @@ export function BookingPage({
                     <Button asChild variant="hotel">
                       <a href={hotel.phoneLink}>
                         <Phone />
-                        Call front desk
+                        Call front desk {hotel.phone} / {hotel.phone2}
                       </a>
                     </Button>
                     <Button asChild variant="outline">
                       <a
-                        href={`https://wa.me/918222020699?text=${encodeURIComponent(
+                        href={`https://wa.me/91${hotel.phone}?text=${encodeURIComponent(
                           `Hello Yashdeep Palace, my booking is confirmed! Reference: ${reference}, Guest: ${guest.name}, Check-in: ${stay.checkIn}`,
                         )}`}
                         target="_blank"
@@ -794,7 +794,7 @@ export function BookingPage({
                 <Button variant="outline" asChild>
                   <a href={hotel.phoneLink}>
                     <Phone />
-                    {hotel.phone}
+                    {hotel.phone} / {hotel.phone2}
                   </a>
                 </Button>
                 <Button variant="outline" asChild>

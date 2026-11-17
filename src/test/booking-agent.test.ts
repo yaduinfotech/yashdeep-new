@@ -17,16 +17,16 @@ const stay = {
 };
 describe("Booking agent safeguards", () => {
   it("restricts verification destinations to India before sending", () => {
-    expect(verificationPhoneSchema.parse("8222020699")).toBe("+918222020699");
-    expect(verificationPhoneSchema.parse("+91 82220 20699")).toBe("+918222020699");
-    for (const phone of ["+14155552671", "+447911123456", "+971501234567", "+9182220206990"]) {
+    expect(verificationPhoneSchema.parse("8222020599")).toBe("+918222020599");
+    expect(verificationPhoneSchema.parse("+91 82220 20599")).toBe("+918222020599");
+    for (const phone of ["+14155552671", "+447911123456", "+971501234567", "+918222020599"]) {
       expect(verificationPhoneSchema.safeParse(phone).success).toBe(false);
       expect(() => mobileVerificationParameters(phone)).toThrow();
     }
   });
   it("explicitly enables Twilio risk checks on every SMS verification send", () => {
-    expect(Object.fromEntries(mobileVerificationParameters("+918222020699"))).toEqual({
-      To: "+918222020699",
+    expect(Object.fromEntries(mobileVerificationParameters("+918222020599"))).toEqual({
+      To: "+918222020599",
       Channel: "sms",
       RiskCheck: "enable",
     });
@@ -43,17 +43,17 @@ describe("Booking agent safeguards", () => {
   it("requires provider approval, valid code and exact mobile", () => {
     expect(
       approvedMobileCheck(
-        { status: "approved", valid: true, to: "+918222020699" },
-        "+918222020699",
+        { status: "approved", valid: true, to: "+918222020599" },
+        "+918222020599",
       ),
     ).toBe(true);
     expect(
-      approvedMobileCheck({ status: "pending", valid: true, to: "+918222020699" }, "+918222020699"),
+      approvedMobileCheck({ status: "pending", valid: true, to: "+918222020599" }, "+918222020599"),
     ).toBe(false);
     expect(
       approvedMobileCheck(
         { status: "approved", valid: true, to: "+918222020599" },
-        "+918222020699",
+        "+918222020599",
       ),
     ).toBe(false);
   });

@@ -189,9 +189,9 @@ function AgentChat({ initial, onReview, compact }: { initial: UIMessage[] } & Ag
                     if (isToolUIPart(part)) {
                       const draft =
                         part.state === "output-available" &&
-                        part.output &&
-                        typeof part.output === "object" &&
-                        "stay" in part.output
+                          part.output &&
+                          typeof part.output === "object" &&
+                          "stay" in part.output
                           ? prepareAgentStay(part.output.stay, localToday())
                           : null;
                       return (
@@ -304,7 +304,7 @@ function AgentChat({ initial, onReview, compact }: { initial: UIMessage[] } & Ag
           <Button variant="outline" asChild>
             <a href={hotel.phoneLink}>
               <Phone />
-              Call front desk
+              Call front desk {hotel.phone} / {hotel.phone2}
             </a>
           </Button>
           <Button variant="outline" asChild>
