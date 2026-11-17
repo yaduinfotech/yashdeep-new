@@ -39,7 +39,7 @@ function CustomerAccount() {
   const navigate = useNavigate();
   const query = useQueryClient();
   const [error, setError] = useState("");
-  const { next } = Route.useSearch();
+  const [next, setNext] = useState("");
 
   useEffect(() => {
     const callback = authClient.extractOAuthCallback();
@@ -58,6 +58,9 @@ function CustomerAccount() {
         .then((res) => {
           if (res.ok && res.session?.user) {
             setUser(res.session.user);
+            if (callback.nextUrl) {
+              setNext(callback.nextUrl);
+            }
           } else {
             setError(
               res.error?.message ||

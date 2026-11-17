@@ -9,8 +9,9 @@ export interface SignInResult {
 }
 
 export interface OAuthCallbackResult {
-  accessToken?: string;
-  error?: string;
+  accessToken?: string | undefined;
+  error?: string | undefined;
+  nextUrl?: string | undefined;
 }
 
 export interface GoogleSignupResult {
@@ -86,6 +87,8 @@ export const authClient = {
       searchParams.get("error_description") ||
       searchParams.get("error");
 
+    const nextUrl = searchParams.get("next") || "";
+
     if (accessToken || error) {
       if (window.location.hash) {
         const cleanUrl =
@@ -95,6 +98,7 @@ export const authClient = {
       return {
         accessToken: accessToken || undefined,
         error: error || undefined,
+        nextUrl: nextUrl || undefined,
       };
     }
 
