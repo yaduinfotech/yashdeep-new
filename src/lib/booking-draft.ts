@@ -12,6 +12,7 @@ export interface BookingGuestData {
   email: string;
   phone: string;
   requests: string;
+  company_ref: string;
 }
 
 export interface BookingCouponData {
@@ -95,6 +96,7 @@ export function saveBookingDraft(data: BookingDraftData): void {
       email: data.guest.email ?? "",
       phone: data.guest.phone ?? "",
       requests: data.guest.requests ?? "",
+      company_ref: data.guest.company_ref ?? "",
     },
     appliedCoupon: data.appliedCoupon ?? null,
     savedAt: now,

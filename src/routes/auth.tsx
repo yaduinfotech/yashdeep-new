@@ -8,6 +8,7 @@ import { PageBanner } from "@/components/hotel-layout";
 import { EmailVerification } from "@/components/email-verification";
 import { GoogleSignup } from "@/components/google-signup";
 import { useCustomer } from "@/components/customer-session";
+import { authClient } from "@/lib/auth-client";
 import { emailSchema, SIGNUP_DISCOUNT_PERCENT } from "@/lib/booking-rules";
 import { pageHead } from "@/lib/hotel";
 
@@ -30,14 +31,50 @@ export const Route = createFileRoute("/auth")({
 });
 
 function CustomerAccount() {
-  const { user, ready, signOut } = useCustomer();
+  const { user, ready, setUser, signOut } = useCustomer();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false);
   const navigate = useNavigate();
   const query = useQueryClient();
   const [error, setError] = useState("");
   const { next } = Route.useSearch();
+
+  useEffect(() => {
+    const callback = authClient.extractOAuthCallback();
+    if (!callback) return;
+
+    if (callback.error) {
+      setError(callback.error);
+      return;
+    }
+
+    if (callback.accessToken) {
+      setOauthLoading(true);
+      setError("");
+      authClient
+        .signUpWithGoogleAccessToken(callback.accessToken)
+        .then((res) => {
+          if (res.ok && res.session?.user) {
+            setUser(res.session.user);
+          } else {
+            setError(
+              res.error?.message ||
+                "Google sign-in could not be completed with HMS. Please try again or use email.",
+            );
+          }
+        })
+        .catch((err) => {
+          setError(
+            err?.message || "Google sign-in could not be completed. Please try again or use email.",
+          );
+        })
+        .finally(() => {
+          setOauthLoading(false);
+        });
+    }
+  }, [setUser]);
 
   useEffect(() => {
     if (ready && user && next && next !== "/") {
@@ -76,8 +113,10 @@ function CustomerAccount() {
       <section className="section">
         <div className="content-width enquiry-layout">
           <div>
-            {ready && !user && <GoogleSignup next={next} />}
-            {!ready ? (
+            {ready && !user && !oauthLoading && <GoogleSignup next={next} />}
+            {oauthLoading ? (
+              <p>Signing you in with Google and loading your profile…</p>
+            ) : !ready ? (
               <p>Loading your account…</p>
             ) : user ? (
               <>

@@ -1,125 +1,186 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { emailSchema, guestSchema, staySchema, LIMITS } from "./booking-rules";
-import { validateStay } from "./hotel";
-
-interface EmailOtpEntry {
-  code: string;
-  name: string;
-  expiresAt: number;
-  attempts: number;
-}
-
-const emailOtpStore = new Map<string, EmailOtpEntry>();
-const emailRateLimitStore = new Map<string, { count: number; resetAt: number }>();
-
-function checkEmailRateLimit(email: string): boolean {
-  const now = Date.now();
-  const entry = emailRateLimitStore.get(email);
-  if (!entry || now > entry.resetAt) {
-    emailRateLimitStore.set(email, { count: 1, resetAt: now + LIMITS.email.seconds * 1000 });
-    return true;
-  }
-  if (entry.count >= LIMITS.email.max) {
-    return false;
-  }
-  entry.count += 1;
-  return true;
-}
+import { emailSchema, guestSchema, staySchema } from "./booking-rules";
+import { validateStay, localToday } from "./hotel";
 
 export const sendEmailCode = createServerFn({ method: "POST" })
   .validator(
-    z.object({ email: emailSchema, name: z.string().trim().min(2).max(100), signup: z.boolean() }),
+    z.object({
+      email: emailSchema,
+      name: z.string().trim().min(2).max(100),
+      signup: z.boolean(),
+    }),
   )
   .handler(async ({ data }) => {
     const email = data.email.toLowerCase();
-    if (!checkEmailRateLimit(email)) {
-      return {
-        ok: false,
-        message: "Too many code requests. Please wait 15 minutes before trying again.",
-      };
-    }
-
-    // 1. Dispatch via HMS API Gateway (/api/otp/email/send)
     try {
-      const { hmsSendEmailOtp } = await import("./hms-gateway.server");
-      const hmsRes = await hmsSendEmailOtp(email, data.name, data.signup);
-      if (hmsRes.ok) {
-        setResponseHeader("Cache-Control", "no-store");
-        return {
-          ok: true,
-          message: hmsRes.message || `Check your inbox for a verification code sent to ${email}.`,
-        };
-      }
+      const { sendOtpChallenge } = await import("./api-otp.server");
+      const res = await sendOtpChallenge(undefined, email, "email", {
+        name: data.name,
+        signup: data.signup,
+      });
+      setResponseHeader("Cache-Control", "no-store");
+      return res;
     } catch (e: unknown) {
       const err = e as Error;
       return {
         ok: false,
-        message: err?.message || `Check your inbox for a verification code sent to ${email}.`,
+        message: err?.message || "Unable to send verification code. Please try again.",
       };
     }
   });
 
 export const verifyEmailCode = createServerFn({ method: "POST" })
-  .validator(z.object({ email: emailSchema, code: z.string().regex(/^\d{6,8}$/) }))
+  .validator(
+    z.object({
+      email: emailSchema,
+      code: z
+        .string()
+        .trim()
+        .regex(/^\d{6,8}$/),
+    }),
+  )
   .handler(async ({ data }) => {
     const email = data.email.toLowerCase();
-
-    // 1. Verify via HMS API Gateway (/api/otp/email/verify)
     try {
-      const { hmsVerifyEmailOtp } = await import("./hms-gateway.server");
-      const { verifiedTokenStore } = await import("./api-otp.server");
-      const hmsRes = await hmsVerifyEmailOtp(email, data.code);
-      if (hmsRes.ok) {
-        const token = hmsRes.verificationToken || "";
-        verifiedTokenStore.set(token, {
-          email,
-          expiresAt: Date.now() + 20 * 60 * 1000,
-        });
-        setResponseHeader("Cache-Control", "no-store");
-        const confirmedAt = new Date().toISOString();
-        return {
-          ok: true,
-          message: hmsRes.message || "Email verified.",
-          verificationToken: token,
-          session: {
-            user: {
-              id: token,
-              email,
-              user_metadata: { display_name: email.split("@")[0] },
-              email_confirmed_at: confirmedAt,
-            },
+      const { verifyOtpChallenge } = await import("./api-otp.server");
+      const res = await verifyOtpChallenge(undefined, email, "email", data.code);
+
+      setResponseHeader("Cache-Control", "no-store");
+      const confirmedAt = new Date().toISOString();
+      const displayName = res.name || email.split("@")[0];
+
+      return {
+        ok: true,
+        message: res.message || "Email verified.",
+        verificationToken: res.verificationToken,
+        session: {
+          user: {
+            id: res.verificationToken,
+            email,
+            user_metadata: { display_name: displayName },
+            email_confirmed_at: confirmedAt,
           },
-        };
-      }
-    } catch (e) {
-      console.warn("[Email OTP] HMS API verification error, falling back:", e);
+        },
+      };
+    } catch (e: unknown) {
+      const err = e as Error;
+      return {
+        ok: false,
+        message: err?.message || "The verification code is invalid or expired.",
+      };
     }
   });
 
 export { sendMobileOtp as requestMobileCode } from "./mobile.functions";
+
+export const googleOAuthSignup = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      accessToken: z.string().min(1, "Access token is required"),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const accessToken = data.accessToken.trim();
+
+    let googleProfile:
+      | {
+          id?: string;
+          email?: string;
+          name?: string;
+          picture?: string;
+          verifiedEmail?: boolean;
+        }
+      | undefined = undefined;
+
+    const { hmsGoogleOAuthSignup } = await import("./hms-gateway.server");
+    const hmsRes = await hmsGoogleOAuthSignup({
+      accessToken: accessToken as string,
+      profile: googleProfile as any,
+    });
+
+    if (!hmsRes.ok) {
+      throw new Error(hmsRes.message || "Failed to sign up with Google via HMS API.");
+    }
+
+    const email = hmsRes.user?.email || googleProfile?.email || "";
+    const name = hmsRes.user?.name || googleProfile?.name || email.split("@")[0] || "Guest";
+    const id = hmsRes.user?.id || googleProfile?.id || hmsRes.verificationToken || email;
+    const token = hmsRes.verificationToken || hmsRes.token || "";
+
+    if (token && email) {
+      const { verifiedTokenStore } = await import("./api-otp.server");
+      verifiedTokenStore.set(token, {
+        email,
+        expiresAt: Date.now() + 20 * 60 * 1000,
+      });
+    }
+
+    setResponseHeader("Cache-Control", "no-store");
+    const confirmedAt = new Date().toISOString();
+
+    return {
+      ok: true,
+      message: hmsRes.message || "Signed in with Google successfully.",
+      verificationToken: token,
+      session: {
+        user: {
+          id,
+          email,
+          user_metadata: {
+            display_name: name,
+            ...(googleProfile?.picture ? { avatar_url: googleProfile.picture } : {}),
+          },
+          email_confirmed_at: confirmedAt,
+        },
+      },
+    };
+  });
+
+import crypto from "node:crypto";
 
 export const submitBookingRequest = createServerFn({ method: "POST" })
   .validator(
     z.object({
       stay: staySchema,
       guest: guestSchema,
-      verificationToken: z.string(),
+      verificationToken: z.string().optional(),
+      isLoggedIn: z.boolean().optional(),
       couponCode: z.string().optional(),
     }),
   )
   .handler(async ({ data }) => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localToday();
     const problem = validateStay(data.stay, today);
     if (problem) throw new Error(problem);
 
-    if (data.verificationToken) {
-      const { isPhoneVerificationTokenValid } = await import("./api-otp.server");
-      const valid = isPhoneVerificationTokenValid(data.guest.phone, data.verificationToken);
-      if (!valid) {
+    const { verifiedTokenStore, isPhoneVerificationTokenValid, isEmailVerificationTokenValid } =
+      await import("./api-otp.server");
+
+    let token =
+      data.verificationToken ||
+      verifiedTokenStore.getTokenFor(data.guest.email) ||
+      verifiedTokenStore.getTokenFor(data.guest.phone) ||
+      "";
+
+    // If user is already logged in on the portal, register a session token so OTP isn't needed
+    if (data.isLoggedIn && data.guest.email) {
+      if (!token || token.startsWith("session:")) {
+        token = token || `session_${crypto.randomUUID()}`;
+      }
+      verifiedTokenStore.set(token, {
+        email: data.guest.email.toLowerCase(),
+        phone: data.guest.phone,
+        expiresAt: Date.now() + 20 * 60 * 1000,
+      });
+    } else {
+      const isEmailValid = isEmailVerificationTokenValid(data.guest.email, token);
+      const isPhoneValid = isPhoneVerificationTokenValid(data.guest.phone, token);
+
+      if (!isEmailValid && !isPhoneValid) {
         throw new Error(
-          "Mobile verification token is invalid or expired. Please verify your number.",
+          "Verification token is invalid or expired. Please verify your email or mobile number.",
         );
       }
     }
@@ -128,7 +189,8 @@ export const submitBookingRequest = createServerFn({ method: "POST" })
     const hmsResult = await hmsSubmitBooking({
       guest: data.guest,
       stay: data.stay,
-      verificationToken: data.verificationToken,
+      couponCode: data.couponCode || "",
+      verificationToken: token,
     });
 
     if (!hmsResult.ok) {

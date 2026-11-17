@@ -18,10 +18,29 @@ export const enquiryInputSchema = z.object({
 
 export const feedbackInputSchema = z.object({
   guestName: z.string().trim().min(2, "Name must be at least 2 characters").max(150),
-  email: emailSchema.optional(),
+  email: emailSchema.optional().or(z.literal("")),
   rating: z.number().int().min(1).max(5),
   category: z.string().trim().max(100).optional(),
   comments: z.string().trim().min(5, "Comments must be at least 5 characters").max(2000),
+});
+
+const otpChannelSchema = z.object({
+  phone: z
+    .string()
+    .trim()
+    .min(8, "Enter a valid phone number")
+    .max(25)
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => v || undefined),
+  email: z
+    .string()
+    .trim()
+    .email("Enter a valid email address")
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => v || undefined),
+  otpType: z.enum(["phone", "email"]).default("email"),
 });
 
 /**
@@ -38,12 +57,11 @@ export const submitEnquiry = createServerFn({ method: "POST" })
       phone: data.phone,
       message: data.message,
       verificationToken: data.verificationToken || "",
-      // Aliases
       type: data.type,
     });
 
     if (!res.ok) {
-      throw new Error(res.message || "Unable to submit feedback.");
+      throw new Error(res.message || "Unable to submit enquiry.");
     }
 
     return {
@@ -79,22 +97,21 @@ export const submitFeedback = createServerFn({ method: "POST" })
   });
 
 /**
- * Server function: Requests an OTP code for mobile verification via API (no ).
+ * Server function: Requests an OTP code for mobile or email verification via API.
  */
-export const requestMobileOtpApi = createServerFn({ method: "POST" })
-  .validator(z.object({ phone: z.string().trim().min(8).max(25) }))
+export const requestOtpApi = createServerFn({ method: "POST" })
+  .validator(otpChannelSchema)
   .handler(async ({ data }) => {
     const { sendOtpChallenge } = await import("./api-otp.server");
-    return sendOtpChallenge(data.phone);
+    return sendOtpChallenge(data.phone, data.email, data.otpType);
   });
 
 /**
  * Server function: Verifies the 6-digit OTP code and returns a verification token.
  */
-export const verifyMobileOtpApi = createServerFn({ method: "POST" })
+export const verifyOtpApi = createServerFn({ method: "POST" })
   .validator(
-    z.object({
-      phone: z.string().trim().min(8).max(25),
+    otpChannelSchema.extend({
       code: z
         .string()
         .trim()
@@ -104,13 +121,14 @@ export const verifyMobileOtpApi = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     try {
       const { verifyOtpChallenge } = await import("./api-otp.server");
-      return await verifyOtpChallenge(data.phone, data.code);
+      return await verifyOtpChallenge(data.phone, data.email, data.otpType, data.code);
     } catch (e: unknown) {
       const err = e as Error;
       return {
         ok: false,
+        verificationToken: undefined,
         phone: data.phone,
-        verificationToken: "",
+        email: data.email,
         message: err?.message || "Invalid OTP code",
       };
     }
@@ -123,7 +141,13 @@ export const validateCouponApi = createServerFn({ method: "POST" })
   .validator(
     z.object({
       code: z.string().trim().min(2, "Enter a valid coupon code").max(50),
-      email: z.string().trim().email().optional(),
+      email: z
+        .string()
+        .trim()
+        .email()
+        .optional()
+        .or(z.literal(""))
+        .transform((v) => v || undefined),
       subtotal: z.number(),
     }),
   )

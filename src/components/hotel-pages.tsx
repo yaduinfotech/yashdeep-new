@@ -134,10 +134,11 @@ export function RoomDetail({ slug }: { slug: string }) {
                     key={img + i}
                     type="button"
                     onClick={() => setSelectedPhoto(img)}
-                    className={`relative shrink-0 w-20 h-16 rounded-md overflow-hidden border-2 transition-all cursor-pointer ${selectedPhoto === img
+                    className={`relative shrink-0 w-20 h-16 rounded-md overflow-hidden border-2 transition-all cursor-pointer ${
+                      selectedPhoto === img
                         ? "border-primary ring-2 ring-primary/30"
                         : "border-transparent opacity-70 hover:opacity-100"
-                      }`}
+                    }`}
                   >
                     <img
                       src={img}
@@ -305,7 +306,8 @@ export function RoomDetail({ slug }: { slug: string }) {
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" className="flex-1 text-xs" asChild>
                   <a href={hotel.phoneLink}>
-                    <Phone className="size-3.5 mr-1" /> Call Reception {hotel.phone} / {hotel.phone2}
+                    <Phone className="size-3.5 mr-1" /> Call Reception {hotel.phone} /{" "}
+                    {hotel.phone2}
                   </a>
                 </Button>
                 <Button variant="outline" size="sm" className="flex-1 text-xs" asChild>

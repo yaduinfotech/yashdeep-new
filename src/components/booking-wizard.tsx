@@ -25,11 +25,12 @@ import {
 } from "@/lib/hotel";
 import { guestSchema } from "@/lib/booking-rules";
 import { submitBookingRequest } from "@/lib/customer.functions";
-import { requestMobileOtpApi, verifyMobileOtpApi, validateCouponApi } from "@/lib/api.functions";
+import { requestOtpApi, verifyOtpApi, validateCouponApi } from "@/lib/api.functions";
 import { saveBookingDraft, loadBookingDraft, clearBookingDraft } from "@/lib/booking-draft";
 import { PageBanner } from "./hotel-layout";
 import { useCustomer } from "./customer-session";
 import { GoogleSignup } from "./google-signup";
+import { verifiedTokenStore } from "@/lib/hms-gateway.server";
 
 export function BookingPage({
   initial,
@@ -39,6 +40,7 @@ export function BookingPage({
   embedded?: boolean;
 }) {
   const { user } = useCustomer();
+  const isLoggedIn = Boolean(user?.email);
   const [step, setStep] = useState(1);
   const [stay, setStay] = useState<Stay>({
     checkIn: initial.checkIn ?? "",
@@ -48,13 +50,19 @@ export function BookingPage({
     rooms: initial.rooms ?? 1,
     room: initial.room ?? "",
   });
-  const [guest, setGuest] = useState({ name: "", email: "", phone: "", requests: "" });
+  const [guest, setGuest] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    requests: "",
+    company_ref: "",
+  });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [reference, setReference] = useState("");
   const [restoredDraft, setRestoredDraft] = useState(false);
 
-  // Coupon validation state (discount is only given after verifying code received on email)
+  // Coupon validation state
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
@@ -64,12 +72,20 @@ export function BookingPage({
   const [couponSuccess, setCouponSuccess] = useState("");
   const [couponBusy, setCouponBusy] = useState(false);
 
+  // In-Place OTP State (Defaulted to "email" to match active UI)
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpType, setOtpType] = useState<"phone" | "email">("email");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpNotice, setOtpNotice] = useState("");
+  const [verificationToken, setVerificationToken] = useState("");
+  const [otpBusy, setOtpBusy] = useState(false);
+
   // Auto-fill guest email if user is logged in
   useEffect(() => {
     if (user?.email && !guest.email) {
       setGuest((g) => ({ ...g, email: user.email || "" }));
     }
-  }, [user]);
+  }, [user, guest.email]);
 
   // Restore booking progress from 36-hour storage on mount
   useEffect(() => {
@@ -80,7 +96,6 @@ export function BookingPage({
     const draftStay = { ...draft.stay };
     let targetStep = draft.step;
 
-    // If saved checkIn date has passed, reset dates and keep user on Step 1
     if (draftStay.checkIn && draftStay.checkIn < today) {
       draftStay.checkIn = "";
       draftStay.checkOut = "";
@@ -109,6 +124,7 @@ export function BookingPage({
         email: draft.guest.email || prev.email,
         phone: draft.guest.phone || prev.phone,
         requests: draft.guest.requests || prev.requests,
+        company_ref: draft.guest.company_ref || prev.company_ref,
       }));
     }
 
@@ -128,7 +144,7 @@ export function BookingPage({
 
   // Persist draft for 36 hours as customer progresses through the wizard
   useEffect(() => {
-    if (reference) return; // Do not save once booking is confirmed
+    if (reference) return;
     saveBookingDraft({
       step,
       stay,
@@ -137,21 +153,14 @@ export function BookingPage({
     });
   }, [step, stay, guest, appliedCoupon, reference]);
 
-  // In-Place Mobile OTP State
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
-  const [otpNotice, setOtpNotice] = useState("");
-  const [verificationToken, setVerificationToken] = useState("");
-  const [otpBusy, setOtpBusy] = useState(false);
-
   const container = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (embedded) container.current?.closest(".floating-booking-body")?.scrollTo({ top: 0 });
   }, [step, embedded]);
 
   const submitBooking = useServerFn(submitBookingRequest);
-  const requestOtp = useServerFn(requestMobileOtpApi);
-  const verifyOtp = useServerFn(verifyMobileOtpApi);
+  const requestOtp = useServerFn(requestOtpApi);
+  const verifyOtp = useServerFn(verifyOtpApi);
   const validateCoupon = useServerFn(validateCouponApi);
 
   const hasDiscount = Boolean(appliedCoupon);
@@ -179,30 +188,51 @@ export function BookingPage({
         setError(parsed.error.issues[0]?.message ?? "Check your contact details.");
         return;
       }
-      setGuest(parsed.data);
+      setGuest({
+        ...parsed.data,
+        company_ref: parsed.data.company_ref ?? guest.company_ref ?? "",
+      });
     }
     setStep((s) => Math.min(s + 1, 3));
   }
 
-  // Request Mobile OTP via API
-  async function handleSendOtp() {
+  // Pass targetType directly to avoid stale state when switching between phone/email
+  async function handleSendOtp(targetType: "phone" | "email" = otpType) {
     setError("");
     setOtpNotice("");
+    setOtpType(targetType);
     setOtpBusy(true);
     try {
-      const res = await requestOtp({ data: { phone: guest.phone } });
+      const res = await requestOtp({
+        data: {
+          email: guest.email || user?.email || undefined,
+          phone: guest.phone,
+          otpType: targetType,
+        },
+      });
+      if (!res.ok) {
+        setOtpSent(false);
+        setError(res.message || "Failed to send OTP");
+        return;
+      }
       setOtpSent(true);
-      setOtpNotice(res.message || "OTP sent to your mobile phone.");
+      setOtpNotice(
+        res.message ||
+          `OTP sent to your ${targetType === "phone" ? "phone number." : "email address."}`,
+      );
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Could not send OTP. Please check your phone number.",
+        err instanceof Error
+          ? err.message
+          : `Could not send OTP. Please check your ${
+              targetType === "phone" ? "phone number." : "email address."
+            }`,
       );
     } finally {
       setOtpBusy(false);
     }
   }
 
-  // Validate coupon code via API
   async function handleApplyCoupon() {
     setCouponError("");
     setCouponSuccess("");
@@ -235,39 +265,73 @@ export function BookingPage({
     }
   }
 
-  // Verify OTP and submit booking to HMS API
+  async function handleBookingSubmit() {
+    setError("");
+    setBusy(true);
+    try {
+      const result = await submitBooking({
+        data: {
+          stay,
+          guest,
+          verificationToken: verificationToken || "",
+          couponCode: appliedCoupon?.code || undefined,
+        },
+      });
+      setReference(result.id);
+      clearBookingDraft();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Your booking could not be completed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleVerifyAndSubmit() {
     setError("");
     setBusy(true);
     try {
-      let token = verificationToken;
+      // If user is already logged in, use their session id/email as token and skip OTP
+      let token = verificationToken || (isLoggedIn ? user?.id || `session:${user?.email}` : "");
+
       if (!token) {
         if (!otpCode || otpCode.length !== 6) {
-          setError("Please enter the 6-digit OTP code sent to your phone.");
+          setError(
+            `Please enter the 6-digit OTP code sent to your ${
+              otpType === "phone" ? "phone" : "email"
+            }.`,
+          );
           setBusy(false);
           return;
         }
-        const verifyRes = await verifyOtp({ data: { phone: guest.phone, code: otpCode } });
-        token = verifyRes.verificationToken;
+        const verifyRes = await verifyOtp({
+          data: {
+            phone: guest.phone,
+            email: guest.email || user?.email || undefined,
+            otpType,
+            code: otpCode,
+          },
+        });
+        token = verifyRes?.verificationToken || "";
         if (!token) {
-          throw new Error(verifyRes.message);
+          throw new Error(verifyRes?.message || "Invalid OTP");
         }
         setVerificationToken(token);
       }
 
-      // Submit booking to HMS API
-      if (token) {
-        const result = await submitBooking({
-          data: {
-            stay,
-            guest,
-            verificationToken: token,
-            couponCode: appliedCoupon?.code || undefined,
+      const result = await submitBooking({
+        data: {
+          stay,
+          guest: {
+            ...guest,
+            email: guest.email || user?.email || "",
           },
-        });
-        setReference(result.id);
-        clearBookingDraft();
-      }
+          verificationToken: String(token),
+          isLoggedIn,
+          couponCode: appliedCoupon?.code || undefined,
+        },
+      });
+      setReference(result.id);
+      clearBookingDraft();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Your booking could not be completed.");
     } finally {
@@ -287,7 +351,6 @@ export function BookingPage({
 
       <section className="section">
         <div className="content-width">
-          {/* Restored Progress Banner */}
           {restoredDraft && !reference && step > 1 && (
             <div className="mb-4 flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs sm:text-sm">
               <span className="flex items-center gap-1.5 font-medium text-foreground">
@@ -309,7 +372,13 @@ export function BookingPage({
                     rooms: initial.rooms ?? 1,
                     room: initial.room ?? "",
                   });
-                  setGuest({ name: "", email: user?.email || "", phone: "", requests: "" });
+                  setGuest({
+                    name: "",
+                    email: user?.email || "",
+                    phone: "",
+                    requests: "",
+                    company_ref: "",
+                  });
                   setAppliedCoupon(null);
                   setCouponCode("");
                   setCouponSuccess("");
@@ -361,7 +430,8 @@ export function BookingPage({
                     </p>
                     <p className="text-2xl font-mono font-extrabold text-gold mt-1">{reference}</p>
                     <p className="text-xs text-muted-foreground mt-2">
-                      A confirmation SMS has been dispatched to <strong>{guest.phone}</strong>.
+                      A confirmation has been dispatched to <strong>{guest.email}</strong> and{" "}
+                      <strong>{guest.phone}</strong>.
                     </p>
                   </div>
 
@@ -490,28 +560,55 @@ export function BookingPage({
                 /* STEP 2: GUEST DETAILS */
                 <form className="enquiry-form" onSubmit={next}>
                   <h2 className="full-field">A little about you.</h2>
-                  {(["name", "email", "phone"] as const).map((key) => (
-                    <div className={`form-field ${key === "name" ? "full-field" : ""}`} key={key}>
-                      <label htmlFor={`guest-${key}`}>
-                        {key === "name"
-                          ? "Full name"
-                          : key === "email"
-                            ? "Email address"
-                            : "Mobile number"}{" "}
-                        *
-                      </label>
-                      <input
-                        id={`guest-${key}`}
-                        type={key === "email" ? "email" : key === "phone" ? "tel" : "text"}
-                        required
-                        readOnly={key === "email" && user?.email ? true : false}
-                        maxLength={key === "phone" ? 10 : 100}
-                        placeholder={key === "phone" ? "10-digit mobile number" : undefined}
-                        value={guest[key]}
-                        onChange={(e) => setGuest((g) => ({ ...g, [key]: e.target.value }))}
-                      />
-                    </div>
-                  ))}
+                  {(["name", "email", "phone", "company_ref"] as const).map((key) => {
+                    const isRequired = key !== "company_ref";
+                    const labelText =
+                      key === "name"
+                        ? "Full name"
+                        : key === "email"
+                          ? "Email address"
+                          : key === "phone"
+                            ? "Phone number"
+                            : "Company / Corporate Ref Name";
+
+                    return (
+                      <div
+                        className={`form-field ${["name", "company_ref"].includes(key) ? "full-field" : ""}`}
+                        key={key}
+                      >
+                        <label htmlFor={`guest-${key}`}>
+                          {labelText} {isRequired ? "*" : "(Optional)"}
+                        </label>
+                        <input
+                          id={`guest-${key}`}
+                          type={key === "email" ? "email" : key === "phone" ? "tel" : "text"}
+                          required={isRequired}
+                          readOnly={key === "email" && Boolean(user?.email)}
+                          maxLength={key === "phone" ? 10 : 100}
+                          placeholder={
+                            key === "phone"
+                              ? "10-digit mobile number"
+                              : key === "company_ref"
+                                ? "Company / Corporate Ref Name"
+                                : key === "email"
+                                  ? "Email address"
+                                  : "Full name"
+                          }
+                          value={guest[key]}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setGuest((g) => ({ ...g, [key]: val }));
+                            // Reset OTP verification if contact info changes
+                            if (key === "email" || key === "phone") {
+                              setOtpSent(false);
+                              setOtpCode("");
+                              setVerificationToken("");
+                            }
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
                   <div className="form-field full-field">
                     <label htmlFor="requests">Special requests</label>
                     <textarea
@@ -538,11 +635,11 @@ export function BookingPage({
                   </div>
                 </form>
               ) : (
-                /* STEP 3: REVIEW, PRICE CALCULATION & IN-PLACE MOBILE OTP VERIFICATION */
+                /* STEP 3: REVIEW, PRICE CALCULATION & IN-PLACE EMAIL OTP VERIFICATION */
                 <div className="review-panel">
                   <h2>Review your booking.</h2>
                   <p className="rate-note mb-4">
-                    Please verify your details and mobile number before final submission.
+                    Please verify your details and email address before final submission.
                   </p>
 
                   {/* Stay & Guest Summary */}
@@ -551,6 +648,7 @@ export function BookingPage({
                       Guest: guest.name,
                       Email: guest.email,
                       Mobile: guest.phone,
+                      Company: guest.company_ref || "None",
                       "Check-in": stay.checkIn,
                       "Check-out": stay.checkOut,
                       Duration: `${pricing.nights} night${pricing.nights > 1 ? "s" : ""}`,
@@ -593,9 +691,10 @@ export function BookingPage({
                       {hasDiscount && (
                         <div className="flex justify-between text-emerald-600 font-medium">
                           <span className="flex items-center gap-1">
-                            <Tag size={14} /> Coupon {appliedCoupon?.code} (10% OFF applied)
+                            <Tag size={14} /> Coupon {appliedCoupon?.code} (
+                            {appliedCoupon?.discountPercent}% OFF applied)
                           </span>
-                          <span>- ₹{pricing.discount.toLocaleString("en-IN")}</span>
+                          <span>-₹{pricing.discount.toLocaleString("en-IN")}</span>
                         </div>
                       )}
 
@@ -696,77 +795,84 @@ export function BookingPage({
                     )}
                   </div>
 
-                  {/* IN-PLACE MOBILE OTP VERIFICATION SECTION */}
-                  <div className="rounded-xl border border-border bg-card p-5 mb-6">
-                    <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
-                      <KeyRound className="text-gold" size={18} /> Verify Mobile Number via OTP
-                    </h3>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      To confirm your reservation request, verify your mobile number (
-                      <strong>{guest.phone}</strong>) via SMS OTP.
-                    </p>
-
-                    {!otpSent ? (
-                      <div className="flex items-center gap-3">
-                        <Button
-                          type="button"
-                          variant="hotel"
-                          disabled={otpBusy}
-                          onClick={handleSendOtp}
-                        >
-                          {otpBusy ? "Sending OTP…" : "Send Mobile Verification OTP"}
-                        </Button>
+                  {/* STEP 3: CONFIRMATION OR OTP VERIFICATION */}
+                  {isLoggedIn ? (
+                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-5 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <h3 className="text-base font-semibold flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                          <CheckCircle2 size={18} /> Verified Account ({user?.email})
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          You are signed in—no additional OTP verification is required.
+                        </p>
                       </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {otpNotice && (
-                          <p className="text-xs text-emerald-600 font-medium">{otpNotice}</p>
-                        )}
-                        <div className="flex flex-wrap items-center gap-3">
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            maxLength={6}
-                            placeholder="6-digit OTP code"
-                            className="w-48 px-3 py-2 rounded-md border border-input bg-background font-mono text-center tracking-widest text-lg"
-                            value={otpCode}
-                            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                          />
+                      <Button
+                        type="button"
+                        variant="hotel"
+                        disabled={busy}
+                        onClick={handleVerifyAndSubmit}
+                      >
+                        {busy ? "Confirming Booking…" : "Confirm Booking"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-border bg-card p-5 mb-6">
+                      <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
+                        <KeyRound className="text-gold" size={18} /> Verify via OTP on Email
+                      </h3>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        To confirm your reservation request, verify your email address (
+                        <strong>{guest.email}</strong>) via Email OTP.
+                      </p>
+
+                      {!otpSent ? (
+                        <div className="flex items-center gap-3">
                           <Button
                             type="button"
                             variant="hotel"
-                            disabled={busy || otpCode.length !== 6}
-                            onClick={handleVerifyAndSubmit}
-                          >
-                            {busy ? "Verifying & Confirming…" : "Verify & Confirm Booking"}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
                             disabled={otpBusy}
-                            onClick={handleSendOtp}
+                            onClick={() => handleSendOtp("email")}
                           >
-                            Resend code
+                            {otpBusy ? "Sending OTP…" : "Send Email Verification OTP"}
                           </Button>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                  {/* <Button
-                                        type="button"
-                                        variant="hotel"
-                                        disabled={busy}
-                                        onClick={handleSubmitBooking}
-                                    >
-                                        {busy ? 'Verifying & Confirming…' : 'Verify & Confirm Booking'}
-                                    </Button> */}
-
-                  {error && (
-                    <p className="form-error mb-4" role="alert">
-                      {error}
-                    </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {otpNotice && (
+                            <p className="text-xs text-emerald-600 font-medium">{otpNotice}</p>
+                          )}
+                          <div className="flex flex-wrap items-center gap-3">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              maxLength={6}
+                              placeholder="6-digit OTP code"
+                              className="w-48 px-3 py-2 rounded-md border border-input bg-background font-mono text-center tracking-widest text-lg"
+                              value={otpCode}
+                              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                            />
+                            <Button
+                              type="button"
+                              variant="hotel"
+                              disabled={busy || otpCode.length !== 6}
+                              onClick={handleVerifyAndSubmit}
+                            >
+                              {busy ? "Verifying & Confirming…" : "Verify & Confirm Booking"}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              disabled={otpBusy}
+                              onClick={() => handleSendOtp("email")}
+                            >
+                              Resend code
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   <div className="wizard-actions">

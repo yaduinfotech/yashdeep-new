@@ -8,6 +8,25 @@ export interface SignInResult {
   redirected?: boolean;
 }
 
+export interface OAuthCallbackResult {
+  accessToken?: string;
+  error?: string;
+}
+
+export interface GoogleSignupResult {
+  ok: boolean;
+  message?: string;
+  session?: {
+    user: {
+      id: string;
+      email: string;
+      user_metadata?: { display_name?: string; avatar_url?: string };
+      email_confirmed_at?: string;
+    };
+  };
+  error?: Error;
+}
+
 export const authClient = {
   signInWithOAuth: async (provider: "google", opts?: SignInOptions): Promise<SignInResult> => {
     if (provider !== "google") {
@@ -41,5 +60,65 @@ export const authClient = {
     }
 
     return { redirected: false };
+  },
+
+  /**
+   * Extracts Google OAuth token or error from the URL hash or query params.
+   * Automatically clears the hash fragment using history.replaceState to avoid exposing tokens.
+   */
+  extractOAuthCallback: (): OAuthCallbackResult | null => {
+    if (typeof window === "undefined") return null;
+
+    const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : "";
+    const hashParams = new URLSearchParams(hash);
+    const searchParams = new URLSearchParams(window.location.search);
+
+    const accessToken = hashParams.get("access_token") || searchParams.get("access_token");
+    const error =
+      hashParams.get("error_description") ||
+      hashParams.get("error") ||
+      searchParams.get("error_description") ||
+      searchParams.get("error");
+
+    if (accessToken || error) {
+      if (window.location.hash) {
+        const cleanUrl =
+          window.location.pathname + (window.location.search ? window.location.search : "");
+        window.history.replaceState(null, "", cleanUrl);
+      }
+      return {
+        accessToken: accessToken || undefined,
+        error: error || undefined,
+      };
+    }
+
+    return null;
+  },
+
+  /**
+   * Sends Google OAuth access token to HMS API via server function to signup/login and retrieve profile.
+   */
+  signUpWithGoogleAccessToken: async (accessToken: string): Promise<GoogleSignupResult> => {
+    try {
+      const { googleOAuthSignup } = await import("./customer.functions");
+      const res = await googleOAuthSignup({ data: { accessToken } });
+      if (res && res.ok && res.session?.user) {
+        return {
+          ok: true,
+          message: res.message,
+          session: res.session,
+        };
+      }
+      return {
+        ok: false,
+        error: new Error(res?.message || "Failed to sign up with Google."),
+      };
+    } catch (err: unknown) {
+      const e = err as Error;
+      return {
+        ok: false,
+        error: e,
+      };
+    }
   },
 };

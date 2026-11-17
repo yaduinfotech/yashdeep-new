@@ -189,9 +189,9 @@ function AgentChat({ initial, onReview, compact }: { initial: UIMessage[] } & Ag
                     if (isToolUIPart(part)) {
                       const draft =
                         part.state === "output-available" &&
-                          part.output &&
-                          typeof part.output === "object" &&
-                          "stay" in part.output
+                        part.output &&
+                        typeof part.output === "object" &&
+                        "stay" in part.output
                           ? prepareAgentStay(part.output.stay, localToday())
                           : null;
                       return (

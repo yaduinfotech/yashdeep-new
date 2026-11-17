@@ -1,9 +1,10 @@
+import crypto from "node:crypto";
 import { sanitizeObject, sanitizeText, sanitizeEmail, sanitizePhone } from "./sanitizer";
-import { rooms } from "./hotel.ts";
+import { rooms } from "./hotel";
 import { verifiedTokenStore, isEmailVerificationTokenValid } from "./api-otp.server";
-import { error } from "node:console";
 
 export { verifiedTokenStore };
+
 export interface HmsResponse<T = unknown> {
   ok: boolean;
   data?: T;
@@ -21,6 +22,7 @@ export interface HmsBookingPayload {
     email: string;
     phone: string;
     requests?: string;
+    company_ref?: string;
   };
   stay: {
     checkIn: string;
@@ -30,6 +32,7 @@ export interface HmsBookingPayload {
     rooms: number;
     room?: string;
   };
+  couponCode?: string;
   userId?: string;
   verificationToken?: string;
 }
@@ -79,12 +82,29 @@ export async function dispatchHmsRequest<T = Record<string, unknown>>(
     "X-Client-Source": "yashdeep-web",
   };
 
-  const authToken = process.env.HMS_BEARER_TOKEN;
+  const phone =
+    typeof rawPayload["phone"] === "string" ? sanitizePhone(rawPayload["phone"]) : undefined;
+  const email =
+    typeof rawPayload["email"] === "string" ? sanitizeEmail(rawPayload["email"]) : undefined;
+
+  // Prefer explicit tokenOverride or HMS_BEARER_TOKEN; fall back to stored verification token
+  const authToken =
+    tokenOverride ||
+    process.env.HMS_BEARER_TOKEN ||
+    (phone &&
+      (verifiedTokenStore.getTokenFor(phone) ||
+        verifiedTokenStore.getTokenFor(String(rawPayload["phone"])))) ||
+    (email &&
+      (verifiedTokenStore.getTokenFor(email) ||
+        verifiedTokenStore.getTokenFor(String(rawPayload["email"]))));
 
   if (authToken) {
     headers["Authorization"] = `Bearer ${authToken}`;
   }
-  // throw new Error("Headers: " + JSON.stringify(headers) + "Sanitized Payload: " + JSON.stringify(sanitizedPayload));
+  if (tokenOverride) {
+    headers["X-Verification-Token"] = tokenOverride;
+  }
+
   try {
     const res = await fetch(targetUrl, {
       method: "POST",
@@ -145,10 +165,13 @@ export async function dispatchHmsRequest<T = Record<string, unknown>>(
  * Specialized helper: Submits an automated booking to /api/bookings/new
  */
 export async function hmsSubmitBooking(payload: HmsBookingPayload) {
+  const matchedRoom = rooms?.find((r) => r.name === payload.stay.room) || rooms?.[0];
+
   const requestBody = {
     guestName: payload.guest.name,
     email: payload.guest.email,
     phone: payload.guest.phone,
+    companyRef: payload.guest.company_ref || "",
     checkIn: payload.stay.checkIn,
     checkOut: payload.stay.checkOut,
     adults: payload.stay.adults,
@@ -156,17 +179,18 @@ export async function hmsSubmitBooking(payload: HmsBookingPayload) {
     rooms: payload.stay.rooms,
     roomPreference: payload.stay.room || "",
     specialRequests: payload.guest.requests || "",
+    couponCode: payload.couponCode || "",
     // Snake_case aliases for compatibility with backend models
     guest_name: payload.guest.name,
+    company_ref: payload.guest.company_ref || "",
     check_in: payload.stay.checkIn,
     check_out: payload.stay.checkOut,
     check_in_date: payload.stay.checkIn,
     check_out_date: payload.stay.checkOut,
     room_preference: payload.stay.room || "",
-    // get room charges as per room (if multiple rooms booked then get charges of max price room)
-    room_charges_per_night:
-      rooms?.filter((r) => r.name == payload.stay.room)?.[0]?.price || rooms[0]?.price,
+    room_charges_per_night: matchedRoom?.price,
     special_requests: payload.guest.requests || "",
+    coupon_code: payload.couponCode || "",
     user_id: payload.userId,
     verificationToken: payload.verificationToken,
     source: "website",
@@ -186,7 +210,6 @@ export async function hmsSubmitEnquiry(payload: HmsEnquiryPayload) {
     enquiryType: payload.type,
     message: payload.message,
     verificationToken: payload.verificationToken,
-    // Aliases
     enquiry_type: payload.type,
     source: "website",
   };
@@ -265,7 +288,6 @@ export async function hmsValidateCoupon(rawCode: string, rawEmail?: string, subt
     return { ok: false, message: "Please select a valid booking." };
   }
 
-  // Attempt to validate with remote HMS API
   try {
     const res = await dispatchHmsRequest<{
       valid?: boolean;
@@ -273,21 +295,22 @@ export async function hmsValidateCoupon(rawCode: string, rawEmail?: string, subt
       message?: string;
     }>("/api/coupons/validate", { coupon: code, code, email, source: "website", subtotal });
 
-    // throw new Error(JSON.stringify(res) || 'Invalid or expired coupon code. Please check the code sent to your email.');
-    if (res.ok) {
+    if (res.ok && res.data?.valid !== false) {
       return {
         ok: true,
         code,
-        discountPercent: res?.data?.discountPercent,
-        message: res?.data?.message,
+        discountPercent: res.data?.discountPercent ?? 10,
+        message: res.data?.message || "Coupon applied successfully!",
       };
-    } else {
-      throw new Error(
-        res?.data?.message ||
-          res?.message ||
-          "Invalid or expired coupon code. Please check the code sent to your email.",
-      );
     }
+
+    return {
+      ok: false,
+      message:
+        res.data?.message ||
+        res.message ||
+        "Invalid or expired coupon code. Please check the code sent to your email.",
+    };
   } catch (e: unknown) {
     const err = e as Error;
     return {
@@ -317,7 +340,7 @@ export interface HmsOtpVerifyResponse {
  */
 export async function hmsSendMobileOtp(rawPhone: string): Promise<HmsOtpSendResponse> {
   const phone = sanitizePhone(rawPhone);
-  if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
+  if (!/^\+?[1-9]\d{7,14}$/.test(phone)) {
     return { ok: false, message: "Please enter a valid mobile number with country code." };
   }
 
@@ -356,11 +379,9 @@ export async function hmsVerifyMobileOtp(
     message?: string;
   }>("/api/otp/mobile/verify", { phone, code, type: "mobile", source: "website" });
 
-  if (res.ok) {
-    const token = res.data?.verificationToken || res.data?.token || "";
-    if (token) {
-      verifiedTokenStore.set(token, { phone });
-    }
+  if (res.ok && res.data?.verified !== false) {
+    const token = res.data?.verificationToken || res.data?.token || crypto.randomUUID();
+    verifiedTokenStore.set(token, { phone });
     return {
       ok: true,
       phone,
@@ -371,7 +392,7 @@ export async function hmsVerifyMobileOtp(
 
   return {
     ok: false,
-    message: res.message || "Invalid or expired OTP code.",
+    message: res.message || res.data?.message || "Invalid or expired OTP code.",
   };
 }
 
@@ -380,7 +401,7 @@ export async function hmsVerifyMobileOtp(
  */
 export async function hmsSendEmailOtp(
   rawEmail: string,
-  rawName: string,
+  rawName?: string,
   signup = false,
 ): Promise<HmsOtpSendResponse> {
   const email = sanitizeEmail(rawEmail);
@@ -426,17 +447,123 @@ export async function hmsVerifyEmailOtp(
     message?: string;
   }>("/api/otp/email/verify", { email, code, type: "email", source: "website" });
 
-  if (res.ok) {
+  if (res.ok && res.data?.verified !== false) {
+    const token = res.data?.verificationToken || res.data?.token || crypto.randomUUID();
+    verifiedTokenStore.set(token, { email });
     return {
       ok: true,
       email,
-      verificationToken: res.data?.verificationToken || res.data?.token || "",
+      verificationToken: token,
       message: res.message || res.data?.message || "Email verified successfully.",
     };
   }
 
   return {
     ok: false,
-    message: res.message || "The code is invalid or expired.",
+    message: res.message || res.data?.message || "The code is invalid or expired.",
+  };
+}
+
+export interface HmsGoogleSignupPayload {
+  accessToken: string;
+  profile?: {
+    id?: string;
+    email?: string;
+    name?: string;
+    picture?: string;
+    verifiedEmail?: boolean;
+    [key: string]: unknown;
+  };
+}
+
+export interface HmsGoogleSignupResponse {
+  ok: boolean;
+  message?: string;
+  user?: {
+    id: string;
+    email: string;
+    name?: string;
+    phone?: string;
+    picture?: string;
+    [key: string]: unknown;
+  };
+  token?: string;
+  verificationToken?: string;
+}
+
+/**
+ * Specialized helper: Sends Google OAuth access token to HMS API for user signup/login and profile retrieval.
+ * Endpoint: /api/auth/google
+ */
+export async function hmsGoogleOAuthSignup(
+  payload: HmsGoogleSignupPayload,
+): Promise<HmsGoogleSignupResponse> {
+  const requestBody = {
+    accessToken: payload.accessToken,
+    access_token: payload.accessToken,
+    profile: payload.profile,
+    source: "website",
+  };
+
+  const res = await dispatchHmsRequest<{
+    user?: {
+      id?: string;
+      email?: string;
+      name?: string;
+      phone?: string;
+      picture?: string;
+      [key: string]: unknown;
+    };
+    token?: string;
+    verificationToken?: string;
+    message?: string;
+    data?: {
+      message?: string;
+      statusCode?: number | string;
+      user?: unknown;
+    };
+  }>("/api/auth/google", requestBody);
+
+  if (res.ok || Number(res?.data?.data?.statusCode) === 200) {
+    const token = res.data?.verificationToken || res.data?.token || "";
+    const email = res.data?.user?.email || payload.profile?.email || "";
+    if (token && email) {
+      verifiedTokenStore.set(token, { email });
+    }
+
+    return {
+      ok: true,
+      user: res.data?.user
+        ? {
+            id: String(res.data.user.id || res.data.user.email || "google-user"),
+            email: String(res.data.user.email || email),
+            name: res.data.user.name,
+            phone: res.data.user.phone,
+            picture: res.data.user.picture,
+          }
+        : payload.profile?.email
+          ? {
+              id: String(payload.profile.id || payload.profile.email),
+              email: String(payload.profile.email),
+              name: payload.profile.name,
+              picture: payload.profile.picture,
+            }
+          : undefined,
+      token,
+      verificationToken: token,
+      message: res.message || res.data?.message || "Google sign-in completed successfully.",
+    };
+  }
+
+  return {
+    ok: false,
+    user: payload.profile?.email
+      ? {
+          id: "google-user",
+          email: String(payload.profile.email),
+          picture: payload.profile.picture,
+        }
+      : undefined,
+    message: res.message || res.data?.message || "Unable to complete Google sign-in.",
   };
 }

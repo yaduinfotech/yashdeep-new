@@ -23,6 +23,7 @@ export const guestSchema = z.object({
   email: emailSchema,
   phone: phoneSchema,
   requests: z.string().trim().max(1500),
+  company_ref: z.string().trim().max(100),
 });
 export const staySchema = z.object({
   checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

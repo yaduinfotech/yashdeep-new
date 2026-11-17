@@ -8,6 +8,7 @@ import {
   hmsVerifyMobileOtp,
   hmsSendEmailOtp,
   hmsVerifyEmailOtp,
+  hmsGoogleOAuthSignup,
   verifiedTokenStore,
 } from "@/lib/hms-gateway.server";
 
@@ -297,6 +298,50 @@ describe("HMS Centralized API Gateway", () => {
       expect(capturedUrl).toBe("https://hms.yashdeeppalace.com/api/otp/email/verify");
       expect(capturedBody.email).toBe("guest@example.com");
       expect(capturedBody.code).toBe("654321");
+    });
+
+    it("dispatches Google OAuth access token to /api/auth/google and returns user profile", async () => {
+      let capturedUrl = "";
+      let capturedHeaders: Record<string, string> = {};
+      let capturedBody: any = null;
+
+      global.fetch = vi.fn().mockImplementation(async (url, init) => {
+        capturedUrl = String(url);
+        capturedHeaders = init?.headers as Record<string, string>;
+        capturedBody = JSON.parse(init?.body as string);
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ok: true,
+            user: {
+              id: "usr_google_123",
+              email: "raj@example.com",
+              name: "Raj Kumar",
+              picture: "https://example.com/avatar.jpg",
+            },
+            token: "vtok_google_abc",
+          }),
+        };
+      });
+
+      const res = await hmsGoogleOAuthSignup({
+        accessToken: "ya29.test_token_123",
+        profile: {
+          email: "raj@example.com",
+          name: "Raj Kumar",
+        },
+      });
+
+      expect(res.ok).toBe(true);
+      expect(capturedUrl).toBe("https://hms.yashdeeppalace.com/api/auth/google");
+      expect(capturedBody.accessToken).toBe("ya29.test_token_123");
+      expect(capturedBody.source).toBe("website");
+      expect(capturedHeaders["Authorization"]).toBe("Bearer test-secret-bearer-token");
+      expect(res.user?.email).toBe("raj@example.com");
+      expect(res.user?.name).toBe("Raj Kumar");
+      expect(res.verificationToken).toBe("vtok_google_abc");
+      expect(verifiedTokenStore.getTokenFor("raj@example.com")).toBe("vtok_google_abc");
     });
   });
 });
