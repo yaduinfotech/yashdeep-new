@@ -54,6 +54,12 @@ export const authClient = {
       url.searchParams.set("redirect_uri", redirectUri);
       url.searchParams.set("response_type", "token");
       url.searchParams.set("scope", "openid email profile");
+      // 👇 Pass extra parameters
+      if (opts?.extraParams) {
+        Object.entries(opts.extraParams).forEach(([key, value]) => {
+          url.searchParams.set(key, value.toString());
+        });
+      }
 
       window.location.assign(url.href);
       return { redirected: true };

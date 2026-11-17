@@ -11,10 +11,10 @@ export function GoogleSignup({ next }: { next?: string | undefined }) {
     setError("");
     try {
       const result = await authClient.signInWithOAuth("google", {
-        redirect_uri:
-          next && next !== "/"
-            ? new URL(`/auth?next=${encodeURIComponent(next)}`, window.location.origin).href
-            : `${window.location.origin}/auth`,
+        redirect_uri: `${window.location.origin}/auth`,
+        extraParams: {
+          state: JSON.stringify({ next }),
+        },
       });
       if (result.error) {
         setError("Google sign-in could not be completed. Please try again or continue with email.");
