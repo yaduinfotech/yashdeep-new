@@ -58,9 +58,10 @@ function CustomerAccount() {
         .then((res) => {
           if (res.ok && res.session?.user) {
             setUser(res.session.user);
-            if (callback.nextUrl) {
-              setNext(callback.nextUrl);
-            }
+            navigate({ to: callback.nextUrl || "/auth" });
+            // if (callback.nextUrl) {
+            //   setNext(callback.nextUrl);
+            // }
           } else {
             setError(
               res.error?.message ||
@@ -79,11 +80,11 @@ function CustomerAccount() {
     }
   }, [setUser]);
 
-  useEffect(() => {
-    if (ready && user && next && next !== "/") {
-      window.location.assign(next);
-    }
-  }, [ready, user, next]);
+  // useEffect(() => {
+  //   if (ready && user && next && next !== "/") {
+  //     window.location.assign(next);
+  //   }
+  // }, [ready, user, next]);
 
   function submit(e: FormEvent) {
     e.preventDefault();
