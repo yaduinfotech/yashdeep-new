@@ -265,35 +265,14 @@ export function BookingPage({
     }
   }
 
-  async function handleBookingSubmit() {
-    setError("");
-    setBusy(true);
-    try {
-      const result = await submitBooking({
-        data: {
-          stay,
-          guest,
-          verificationToken: verificationToken || "",
-          couponCode: appliedCoupon?.code || undefined,
-        },
-      });
-      setReference(result.id);
-      clearBookingDraft();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Your booking could not be completed.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function handleVerifyAndSubmit() {
     setError("");
     setBusy(true);
     try {
       // If user is already logged in, use their session id/email as token and skip OTP
-      let token = verificationToken || (isLoggedIn ? user?.id || `session:${user?.email}` : "");
+      let token = verificationToken;
 
-      if (!token) {
+      if (!isLoggedIn) {
         if (!otpCode || otpCode.length !== 6) {
           setError(
             `Please enter the 6-digit OTP code sent to your ${

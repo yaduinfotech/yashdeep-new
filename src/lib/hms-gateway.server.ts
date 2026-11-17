@@ -88,15 +88,7 @@ export async function dispatchHmsRequest<T = Record<string, unknown>>(
     typeof rawPayload["email"] === "string" ? sanitizeEmail(rawPayload["email"]) : undefined;
 
   // Prefer explicit tokenOverride or HMS_BEARER_TOKEN; fall back to stored verification token
-  const authToken =
-    tokenOverride ||
-    process.env.HMS_BEARER_TOKEN ||
-    (phone &&
-      (verifiedTokenStore.getTokenFor(phone) ||
-        verifiedTokenStore.getTokenFor(String(rawPayload["phone"])))) ||
-    (email &&
-      (verifiedTokenStore.getTokenFor(email) ||
-        verifiedTokenStore.getTokenFor(String(rawPayload["email"]))));
+  const authToken = process.env.HMS_BEARER_TOKEN;
 
   if (authToken) {
     headers["Authorization"] = `Bearer ${authToken}`;

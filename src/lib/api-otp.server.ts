@@ -76,7 +76,11 @@ export class VerifiedTokenStore {
   getTokenFor(identifier: string): string | undefined {
     const clean = identifier.trim().toLowerCase();
     const now = Date.now();
-    for (const [token, entry] of this.store.entries()) {
+    // in desc by createdAt
+    const sortedEntries = Array.from(this.store.entries()).sort(
+      (a, b) => b[1].createdAt - a[1].createdAt,
+    );
+    for (const [token, entry] of sortedEntries) {
       if (now > entry.expiresAt) {
         this.store.delete(token);
         continue;

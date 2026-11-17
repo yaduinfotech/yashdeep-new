@@ -55,10 +55,13 @@ export const authClient = {
       url.searchParams.set("redirect_uri", redirectUri);
       url.searchParams.set("response_type", "token");
       url.searchParams.set("scope", "openid email profile");
-      // 👇 Pass extra parameters
+      // 👇 remove extra parameters
+      sessionStorage.removeItem("nextUrl"); // Clean up after reading
+
       if (opts?.extraParams) {
         Object.entries(opts.extraParams).forEach(([key, value]) => {
-          url.searchParams.set(key, value.toString());
+          // url.searchParams.set(key, value.toString());
+          sessionStorage.setItem(key, value.toString());
         });
       }
 
@@ -75,11 +78,9 @@ export const authClient = {
    */
   extractOAuthCallback: (): OAuthCallbackResult | null => {
     if (typeof window === "undefined") return null;
-
     const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : "";
     const hashParams = new URLSearchParams(hash);
     const searchParams = new URLSearchParams(window.location.search);
-
     const accessToken = hashParams.get("access_token") || searchParams.get("access_token");
     const error =
       hashParams.get("error_description") ||
@@ -87,8 +88,11 @@ export const authClient = {
       searchParams.get("error_description") ||
       searchParams.get("error");
 
-    const nextUrl = searchParams.get("next") || "";
-
+    let nextUrl = searchParams.get("nextUrl") || "";
+    if (!nextUrl) {
+      nextUrl = sessionStorage.getItem("nextUrl") || "";
+      sessionStorage.removeItem("nextUrl"); // Clean up after reading
+    }
     if (accessToken || error) {
       if (window.location.hash) {
         const cleanUrl =

@@ -13,7 +13,7 @@ export function GoogleSignup({ next }: { next?: string | undefined }) {
       const result = await authClient.signInWithOAuth("google", {
         redirect_uri: `${window.location.origin}/auth`,
         extraParams: {
-          next: JSON.stringify({ next }),
+          nextUrl: next || "/",
         },
       });
       if (result.error) {

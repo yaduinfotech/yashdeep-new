@@ -108,7 +108,6 @@ export const googleOAuthSignup = createServerFn({ method: "POST" })
     const name = hmsRes.user?.name || googleProfile?.name || email.split("@")[0] || "Guest";
     const id = hmsRes.user?.id || googleProfile?.id || hmsRes.verificationToken || email;
     const token = hmsRes.verificationToken || hmsRes.token || "";
-
     if (token && email) {
       const { verifiedTokenStore } = await import("./api-otp.server");
       verifiedTokenStore.set(token, {
