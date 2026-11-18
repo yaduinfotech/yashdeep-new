@@ -26,11 +26,18 @@ import {
   Compass,
   Info,
   MessageCircle,
+  Shield,
+  FileText,
+  Lock,
+  Scale,
+  AlertTriangle,
+  Building,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   hotel,
+  legalAndPrivacy,
   images,
   rooms,
   photos,
@@ -1364,40 +1371,762 @@ export function ContactPage({ type = "General enquiry" }: { type?: string | unde
   );
 }
 export function PrivacyPage() {
+  const { grievanceOfficer } = legalAndPrivacy;
+
   return (
     <>
       <PageBanner
-        title="Privacy & booking enquiries"
-        description="Clear information about your enquiry and reservation."
+        title="Privacy Policy"
+        description="Statutory notice & data governance under the Digital Personal Data Protection Act, 2023 (DPDP Act)."
+        eyebrow="DPDP Act Compliance"
       />
+
       <section className="section">
-        <div className="content-width privacy-copy">
-          <h2>Your information</h2>
-          <p>
-            Information entered here remains in the current page and is used to prepare an email in
-            your own email application. Booking requests submitted after verification are saved
-            securely along with your contact details. Customer accounts store your profile name and
-            verified email. No payment information is collected. Sending the prepared email shares
-            your details with reception.
-          </p>
-          <h2>Reservation terms</h2>
-          <p>
-            Enquiries are not confirmed reservations. The hotel must confirm availability, the total
-            price including taxes, meal inclusions, cancellation and refund policies, and check-in /
-            check-out times directly. Do not make payments without confirming the recipient and
-            terms with the hotel.
-          </p>
-          <h2>External services</h2>
-          <p>
-            Email, telephone and map links open external applications. The contact page includes
-            Google Maps, which may process information under Google's own privacy policy. No
-            analytics or advertising tracking has been installed.
-          </p>
-          <h2>Questions</h2>
-          <p>
-            Contact <a href={`mailto:${hotel.email}`}>{hotel.email}</a> for questions about your
-            enquiry.
-          </p>
+        <div className="content-width legal-container">
+          {/* Quick Legal Switcher */}
+          <nav className="legal-nav-tabs" aria-label="Legal document tabs">
+            <Link to="/privacy" className="legal-nav-tab active">
+              <Shield size={16} /> Privacy Policy (DPDP Act)
+            </Link>
+            <Link to="/terms" className="legal-nav-tab">
+              <FileText size={16} /> Terms & Conditions
+            </Link>
+          </nav>
+
+          <div className="privacy-copy">
+            {/* Statutory DPDP Act Notice Box (Section 5) */}
+            <div className="legal-callout">
+              <div className="legal-badge">
+                <ShieldCheck size={14} /> Statutory Notice under Section 5, DPDP Act 2023
+              </div>
+              <p className="text-sm font-medium text-foreground mb-2">
+                <strong>Data Fiduciary:</strong> {legalAndPrivacy.dataFiduciary} ·{" "}
+                {legalAndPrivacy.registeredAddress}
+              </p>
+              <p className="text-xs text-muted-foreground mb-0">
+                This Privacy Policy serves as the mandatory statutory notice issued by Yashdeep
+                Palace to you, the &ldquo;Data Principal&rdquo;, pursuant to Section 5 of
+                India&apos;s{" "}
+                <strong>Digital Personal Data Protection Act, 2023 (Act No. 22 of 2023)</strong>. It
+                itemises the personal data we collect, our specified lawful processing purposes,
+                your enforceable rights, and our designated grievance redressal mechanism.
+              </p>
+            </div>
+
+            <h2>1. Legislative Scope & Application</h2>
+            <p>
+              This policy governs digital personal data collected online through the Yashdeep Palace
+              website (<span className="font-mono text-xs">yashdeeppalace.com</span>), our direct
+              booking wizard, customer account portal, and front desk communications, as well as
+              personal data collected in non-digital form that is subsequently digitized for hotel
+              guest registration.
+            </p>
+            <p>
+              Under the DPDP Act, <strong>Yashdeep Palace</strong> operates as the{" "}
+              <strong>Data Fiduciary</strong> determining the purpose and means of processing your
+              personal data, and you as the guest or visitor are the <strong>Data Principal</strong>
+              .
+            </p>
+
+            <h2>2. Categories of Personal Data Collected (Itemised Notice)</h2>
+            <p>
+              In accordance with Section 5(1)(a) of the DPDP Act, we collect only the personal data
+              strictly necessary for specified hospitality and regulatory purposes:
+            </p>
+
+            <div className="legal-grid">
+              <div className="legal-grid-item">
+                <h3 className="text-sm font-semibold flex items-center gap-2 mb-2 text-foreground">
+                  <Users size={16} className="text-gold" /> Identity & Contact
+                </h3>
+                <p className="text-xs text-muted-foreground mb-0">
+                  Full guest name, verified email address, verified Indian mobile phone number
+                  (+91), and WhatsApp communication preferences.
+                </p>
+              </div>
+
+              <div className="legal-grid-item">
+                <h3 className="text-sm font-semibold flex items-center gap-2 mb-2 text-foreground">
+                  <BedDouble size={16} className="text-gold" /> Reservation Parameters
+                </h3>
+                <p className="text-xs text-muted-foreground mb-0">
+                  Arrival (check-in) and departure (check-out) dates, selected room category, guest
+                  occupancy counts, and special stay requests.
+                </p>
+              </div>
+
+              <div className="legal-grid-item">
+                <h3 className="text-sm font-semibold flex items-center gap-2 mb-2 text-foreground">
+                  <KeyRound size={16} className="text-gold" /> Verification & Auth
+                </h3>
+                <p className="text-xs text-muted-foreground mb-0">
+                  Temporary One-Time Password (OTP) verification tokens, verification timestamps,
+                  and Google OAuth identity profile (if selected).
+                </p>
+              </div>
+
+              <div className="legal-grid-item">
+                <h3 className="text-sm font-semibold flex items-center gap-2 mb-2 text-foreground">
+                  <Shield size={16} className="text-gold" /> Statutory In-Person ID
+                </h3>
+                <p className="text-xs text-muted-foreground mb-0">
+                  Physical Government-issued photo ID (Aadhaar, Passport, Voter ID, Driving License;
+                  Form C / Visa for foreigners) presented at check-in.
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm">
+              <strong>Technical & Diagnostic Data:</strong> Standard IP addresses and browser
+              user-agent signatures are logged ephemerally solely for firewall defenses, rate
+              limiting (<span className="font-mono text-xs">consume_request_limit</span>), and
+              anti-abuse protection.
+            </p>
+            <p className="text-sm">
+              <strong>Client-Side AI Concierge History:</strong> Conversations with our AI booking
+              concierge are stored exclusively in your local web browser&apos;s{" "}
+              <span className="font-mono text-xs">localStorage</span>. We do not sell or monetize
+              your conversation prompts.
+            </p>
+            <div className="policy-note">
+              <strong>Cardholder Financial Data Protection:</strong> Yashdeep Palace does{" "}
+              <strong>NOT</strong> collect, process, or store credit card numbers, debit card PINs,
+              CVVs, or Net Banking credentials on this website. Room payments are settled in-person
+              at the hotel front desk or through authorized payment POS/UPI terminals.
+            </div>
+
+            <h2>3. Specified Lawful Purposes of Processing</h2>
+            <p>
+              Under Sections 4 and 6 of the DPDP Act, personal data is processed solely for
+              explicit, lawful purposes:
+            </p>
+            <ul className="list-disc">
+              <li>
+                <strong>Fulfillment of Room Reservations:</strong> Registering and processing your
+                booking requests, allocating guest rooms, generating booking references, and
+                providing front desk hospitality.
+              </li>
+              <li>
+                <strong>Fraud Prevention & Anti-Spam Safeguards:</strong> Authenticating guest
+                identities via dual server-verified OTP (SMS and email) to ensure genuine
+                reservations and prevent denial-of-inventory attacks.
+              </li>
+              <li>
+                <strong>Statutory Compliance with Indian Laws:</strong> Adhering to mandatory guest
+                register maintenance under the <em>Sarais Act, 1867</em>, foreign guest reporting
+                (Form C) under the <em>Foreigners Act, 1946</em>, and tax invoicing under the{" "}
+                <em>Central Goods and Services Tax (CGST) Act, 2017</em>.
+              </li>
+              <li>
+                <strong>Account Administration:</strong> Managing your authenticated guest profile,
+                verifying eligibility for customer promotions (e.g. 10% welcome coupon), and
+                streamlining future reservations.
+              </li>
+              <li>
+                <strong>Guest Communication & Support:</strong> Transmitting stay confirmations,
+                responding to inquiries via email or WhatsApp, and handling customer service
+                requests.
+              </li>
+              <li>
+                <strong>Medical Emergency & Public Health (Section 7):</strong> Responding to any
+                medical emergency or breakdown affecting a guest during their stay on premises.
+              </li>
+            </ul>
+
+            <h2>4. Consent & Right to Withdraw Consent (Section 6)</h2>
+            <p>
+              Your consent to the processing of your personal data is free, specific, informed,
+              unconditional, and unambiguous, indicated by affirmative action when submitting a
+              booking request, verifying an OTP, or registering a customer account.
+            </p>
+            <p>
+              <strong>Withdrawal of Consent:</strong> In accordance with Section 6(4) of the DPDP
+              Act, you have the right to withdraw your consent at any time with equal ease. You can
+              withdraw consent by sending an email with your request to our Data Protection
+              Grievance Officer at{" "}
+              <a href={`mailto:${grievanceOfficer.email}`} className="text-gold underline">
+                {grievanceOfficer.email}
+              </a>
+              .
+            </p>
+            <p className="text-sm text-muted-foreground">
+              <em>Consequences of Withdrawal:</em> Upon withdrawal, Yashdeep Palace will cease
+              processing your digital personal data and remove your active customer profile, except
+              where retention is legally mandated by Indian statutory authorities (such as GST tax
+              invoices or police guest register records). Withdrawal does not affect the legality of
+              processing undertaken prior to such withdrawal.
+            </p>
+
+            <h2>5. Rights of the Data Principal (Sections 11–14)</h2>
+            <p>
+              As a Data Principal under the DPDP Act 2023, you enjoy statutory, enforceable rights:
+            </p>
+
+            <div className="legal-grid">
+              <div className="legal-grid-item">
+                <h3 className="text-sm font-semibold flex items-center gap-2 mb-2 text-foreground">
+                  <FileText size={16} className="text-gold" /> Right to Access Information (Sec. 11)
+                </h3>
+                <p className="text-xs text-muted-foreground mb-0">
+                  Request a summary of your digital personal data being processed, processing
+                  activities undertaken, and identities of Data Processors with whom data has been
+                  shared.
+                </p>
+              </div>
+
+              <div className="legal-grid-item">
+                <h3 className="text-sm font-semibold flex items-center gap-2 mb-2 text-foreground">
+                  <CheckCircle size={16} className="text-gold" /> Right to Correction & Erasure
+                  (Sec. 12)
+                </h3>
+                <p className="text-xs text-muted-foreground mb-0">
+                  Request correction of inaccurate or misleading data, completion of incomplete
+                  records, updating of contact details, or erasure of data no longer required for
+                  the specified purpose.
+                </p>
+              </div>
+
+              <div className="legal-grid-item">
+                <h3 className="text-sm font-semibold flex items-center gap-2 mb-2 text-foreground">
+                  <Scale size={16} className="text-gold" /> Right of Grievance Redressal (Sec. 13)
+                </h3>
+                <p className="text-xs text-muted-foreground mb-0">
+                  Avail readily accessible redressal from our designated Grievance Officer within 30
+                  calendar days before escalating to statutory boards.
+                </p>
+              </div>
+
+              <div className="legal-grid-item">
+                <h3 className="text-sm font-semibold flex items-center gap-2 mb-2 text-foreground">
+                  <Users size={16} className="text-gold" /> Right to Nominate (Sec. 14)
+                </h3>
+                <p className="text-xs text-muted-foreground mb-0">
+                  Nominate any individual who shall, in the event of your death or incapacity,
+                  exercise your data rights in accordance with the DPDP Act.
+                </p>
+              </div>
+            </div>
+
+            <h2>6. Duties of the Data Principal (Section 15)</h2>
+            <p>The DPDP Act also outlines corresponding duties for Data Principals:</p>
+            <ul className="list-disc">
+              <li>
+                You must comply with all provisions of applicable laws when exercising rights.
+              </li>
+              <li>
+                You must not impersonate another individual when providing personal data for room
+                bookings.
+              </li>
+              <li>
+                You must provide authentic, verifiably accurate information (specifically mobile
+                numbers and email addresses).
+              </li>
+              <li>
+                You must not file false, frivolous, or vexatious grievances or complaints with the
+                Data Fiduciary or the Data Protection Board of India.
+              </li>
+            </ul>
+
+            <h2>7. Protection of Children & Minors (Section 9)</h2>
+            <p>
+              Yashdeep Palace strictly observes the child protection requirements under Section 9 of
+              the DPDP Act:
+            </p>
+            <ul className="list-disc">
+              <li>
+                Our online reservation portal is intended for use solely by individuals who are at
+                least 18 years of age.
+              </li>
+              <li>
+                We do not knowingly process personal data of children (under 18 years) without
+                verifiable consent from a parent or lawful guardian (obtained during in-person
+                family check-in).
+              </li>
+              <li>
+                We do not track, behaviorally monitor, profile, or direct targeted advertising
+                toward children under any circumstances.
+              </li>
+            </ul>
+
+            <h2>8. Authorized Data Processors & Disclosures</h2>
+            <p>
+              We do not sell, rent, or trade your personal data. We disclose personal data only to
+              authorized Data Processors acting under strict contractual confidentiality and data
+              protection safeguards:
+            </p>
+            <ul className="list-disc">
+              <li>
+                <strong>Hotel Management System (HMS API Gateway):</strong> Secure centralized
+                reservation repository for room bookings and check-in records.
+              </li>
+              <li>
+                <strong>Twilio Inc. (Twilio Verify):</strong> Delivery of SMS verification OTPs with
+                active RiskCheck and fraud prevention.
+              </li>
+              <li>
+                <strong>Transactional Email Gateway (SMTP):</strong> Delivery of email OTPs and stay
+                confirmations.
+              </li>
+              <li>
+                <strong>Google Identity Services:</strong> Optional OAuth authentication for users
+                who voluntarily sign in with Google.
+              </li>
+              <li>
+                <strong>Indian Statutory Authorities:</strong> Local law enforcement, police
+                verification desks, and GST tax authorities where disclosure is mandatory under
+                Indian law.
+              </li>
+            </ul>
+
+            <h2>9. Technical Safeguards & Data Breach Protocol</h2>
+            <p>
+              In compliance with Section 8(5) of the DPDP Act, Yashdeep Palace employs robust
+              technical and organizational measures:
+            </p>
+            <ul className="list-disc">
+              <li>
+                <strong>Transport Encryption:</strong> All digital communications are encrypted in
+                transit using TLS 1.3 / HTTPS.
+              </li>
+              <li>
+                <strong>Strict Rate Limiting:</strong> Verification endpoints are throttled to
+                prevent brute-force attacks and automated credential stuffing.
+              </li>
+              <li>
+                <strong>Breach Notification:</strong> In the event of a personal data breach,
+                Yashdeep Palace will notify the{" "}
+                <strong>Data Protection Board of India (DPBI)</strong> and all affected Data
+                Principals in the form and manner prescribed by the DPDP Rules.
+              </li>
+            </ul>
+
+            <h2>10. Data Retention & Erasure Schedule</h2>
+            <p>
+              Digital personal data is retained only for as long as necessary to fulfill the
+              specified purpose or to satisfy Indian legal obligations:
+            </p>
+            <ul className="list-disc">
+              <li>
+                <strong>Website Inquiries & Drafts:</strong> Unconfirmed booking drafts and
+                transient session tokens are purged after 90 days.
+              </li>
+              <li>
+                <strong>Customer Accounts:</strong> Retained until you request account closure or
+                withdraw consent.
+              </li>
+              <li>
+                <strong>Tax & Statutory Guest Records:</strong> Invoices and GST tax filings are
+                retained for 6 to 8 years as required under the <em>Income Tax Act, 1961</em> and
+                the <em>CGST Act, 2017</em>. Guest register logs are retained as mandated by local
+                police regulations.
+              </li>
+            </ul>
+
+            <h2>11. Data Protection Grievance Officer & Redressal (Section 13)</h2>
+            <p>
+              If you have any questions, wish to exercise your statutory rights (access, correction,
+              erasure, nomination), or wish to register a grievance regarding the processing of your
+              personal data, please contact our designated Grievance Officer:
+            </p>
+
+            <div className="legal-grievance-box">
+              <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Building size={18} className="text-gold" /> {grievanceOfficer.title}
+              </h3>
+              <dl className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt className="text-xs text-muted-foreground uppercase font-medium">
+                    Data Fiduciary
+                  </dt>
+                  <dd className="font-medium text-foreground">{grievanceOfficer.entity}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground uppercase font-medium">
+                    Dedicated Privacy Email
+                  </dt>
+                  <dd>
+                    <a
+                      href={`mailto:${grievanceOfficer.email}`}
+                      className="text-gold font-medium hover:underline"
+                    >
+                      {grievanceOfficer.email}
+                    </a>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground uppercase font-medium">
+                    Front Desk Contact
+                  </dt>
+                  <dd className="text-foreground">
+                    <a href={`tel:${hotel.phoneLink}`} className="hover:underline">
+                      {grievanceOfficer.phone}
+                    </a>{" "}
+                    ·{" "}
+                    <a href={`mailto:${hotel.email}`} className="hover:underline">
+                      {grievanceOfficer.contactEmail}
+                    </a>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground uppercase font-medium">
+                    Response Timelines
+                  </dt>
+                  <dd className="text-foreground">
+                    Acknowledgement: {grievanceOfficer.acknowledgementTimeline}
+                    <br />
+                    Resolution: {grievanceOfficer.resolutionTimeline}
+                  </dd>
+                </div>
+                <div className="md:col-span-2">
+                  <dt className="text-xs text-muted-foreground uppercase font-medium">
+                    Postal Address
+                  </dt>
+                  <dd className="text-foreground">{grievanceOfficer.address}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              <strong>Escalation to Data Protection Board of India:</strong> In case you are not
+              satisfied with the resolution provided by our Grievance Officer, or if you do not
+              receive a response within 30 days, you may file a complaint before the{" "}
+              <strong>Data Protection Board of India (DPBI)</strong> in accordance with Section
+              13(3) of the Digital Personal Data Protection Act, 2023.
+            </p>
+
+            <div className="mt-8 pt-6 border-t border-border flex flex-wrap items-center justify-between gap-4 text-xs text-muted-foreground">
+              <span>Last updated: {legalAndPrivacy.lastUpdated}</span>
+              <Link to="/terms" className="text-gold font-medium hover:underline">
+                View Terms & Conditions <ArrowRight size={14} className="inline ml-1" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+export function TermsPage() {
+  const { grievanceOfficer } = legalAndPrivacy;
+
+  return (
+    <>
+      <PageBanner
+        title="Terms & Conditions"
+        description="Official reservation terms, stay policies, guest identification rules, and hotel house regulations."
+        eyebrow="Guest Agreement"
+      />
+
+      <section className="section">
+        <div className="content-width legal-container">
+          {/* Quick Legal Switcher */}
+          <nav className="legal-nav-tabs" aria-label="Legal document tabs">
+            <Link to="/privacy" className="legal-nav-tab">
+              <Shield size={16} /> Privacy Policy (DPDP Act)
+            </Link>
+            <Link to="/terms" className="legal-nav-tab active">
+              <FileText size={16} /> Terms & Conditions
+            </Link>
+          </nav>
+
+          <div className="privacy-copy">
+            {/* Highlights Card */}
+            <div className="legal-callout">
+              <div className="legal-badge">
+                <FileText size={14} /> Core Stay Rules & Key Information
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-2">
+                <div>
+                  <span className="text-xs uppercase text-muted-foreground block font-medium">
+                    Check-in
+                  </span>
+                  <strong className="text-foreground text-base">{hotel.checkInTime}</strong>
+                </div>
+                <div>
+                  <span className="text-xs uppercase text-muted-foreground block font-medium">
+                    Check-out
+                  </span>
+                  <strong className="text-foreground text-base">{hotel.checkOutTime}</strong>
+                </div>
+                <div>
+                  <span className="text-xs uppercase text-muted-foreground block font-medium">
+                    Statutory ID
+                  </span>
+                  <strong className="text-foreground">Govt Photo ID Mandatory</strong>
+                </div>
+                <div>
+                  <span className="text-xs uppercase text-muted-foreground block font-medium">
+                    Cancellation
+                  </span>
+                  <strong className="text-foreground">Free up to 24 hrs prior</strong>
+                </div>
+              </div>
+            </div>
+
+            <h2>1. Contractual Agreement & Eligibility</h2>
+            <p>
+              These Terms & Conditions (&ldquo;Terms&rdquo;) constitute a legally binding agreement
+              between you (&ldquo;Guest&rdquo;, &ldquo;Customer&rdquo;, or &ldquo;User&rdquo;) and{" "}
+              <strong>Yashdeep Palace</strong> (&ldquo;Hotel&rdquo;, &ldquo;we&rdquo;,
+              &ldquo;us&rdquo;), governing your access to and use of our website (
+              <span className="font-mono text-xs">yashdeeppalace.com</span>) and any booking
+              requests, inquiries, or accommodation services provided at our property in Khushkhera,
+              Rajasthan.
+            </p>
+            <p>
+              By accessing our website, creating a customer account, or submitting a reservation
+              request, you confirm that you are at least 18 years of age, possess the legal capacity
+              to enter into contracts under the <em>Indian Contract Act, 1872</em>, and agree to
+              these Terms and our Privacy Policy under the DPDP Act.
+            </p>
+
+            <h2>2. Booking Requests vs. Confirmed Reservations</h2>
+            <p>
+              To maintain the highest hospitality standards and room allocation accuracy, our
+              booking system operates under an explicit request-and-confirmation workflow:
+            </p>
+            <ul className="list-disc">
+              <li>
+                <strong>Booking Request Submission:</strong> Completing the 4-step wizard creates a
+                verified booking request recorded directly into our Hotel Management System (HMS).
+              </li>
+              <li>
+                <strong>Confirmation Notice:</strong> An online enquiry or booking request
+                constitutes an offer to reserve accommodations and does <strong>not</strong>{" "}
+                constitute an instant or guaranteed room block until accepted and formally confirmed
+                by the hotel via official confirmation email, SMS, or front desk confirmation.
+              </li>
+              <li>
+                <strong>Right of Cancellation / Modification:</strong> The hotel reserves the right
+                to decline or cancel unconfirmed booking requests in the event of obvious pricing
+                errors, room unavailability, fraudulent contact details, or failure to complete dual
+                contact verification.
+              </li>
+            </ul>
+
+            <h2>3. Dual Server-Verified Contact Safeguards</h2>
+            <p>
+              In accordance with our security policies, booking submissions require dual
+              server-verified contacts:
+            </p>
+            <ul className="list-disc">
+              <li>
+                The guest&apos;s email address must be authenticated via an Email One-Time Password
+                (OTP).
+              </li>
+              <li>
+                The guest&apos;s Indian mobile number must be verified via an SMS OTP (powered by
+                Twilio with fraud prevention).
+              </li>
+              <li>
+                Booking requests failing dual server verification are rejected to safeguard
+                inventory for genuine guests.
+              </li>
+            </ul>
+
+            <h2>4. Mandatory Government Photo ID Verification at Check-in</h2>
+            <p>
+              Under Indian hospitality statutes, including the <em>Sarais Act, 1867</em>, the{" "}
+              <em>Foreigners Act, 1946</em>, and local Rajasthan Police guest registration
+              directives,{" "}
+              <strong>
+                every adult guest staying at Yashdeep Palace MUST present an original, valid,
+                Government-issued physical photo identity document at the front desk upon check-in.
+              </strong>
+            </p>
+
+            <div className="policy-note">
+              <strong>Mandatory ID Rules for Indian Nationals:</strong>
+              <br />
+              Acceptable documents:{" "}
+              <strong>Aadhaar Card, Passport, Voter ID Card, or Driving License</strong>.
+              <br />
+              <span className="text-destructive font-semibold">Important Notice:</span>{" "}
+              <strong>PAN Cards are NOT acceptable</strong> as proof of identity or address under
+              Indian hotel regulations and will not be accepted for check-in.
+            </div>
+
+            <div className="policy-note">
+              <strong>Mandatory ID Rules for Foreign Nationals:</strong>
+              <br />
+              Foreign passport holders must present their original valid <strong>
+                Passport
+              </strong>{" "}
+              and valid <strong>Indian Visa or OCI card</strong>, and complete mandatory Form C
+              reporting at reception.
+            </div>
+
+            <p className="text-sm text-destructive font-medium">
+              Failure to present statutory photo ID for each occupant will result in immediate
+              denial of check-in, and the reservation will be treated as a same-day cancellation
+              with forfeiture of applicable room charges.
+            </p>
+
+            <h2>5. Tariffs, Inclusions, Taxes (GST) & Payments</h2>
+            <ul className="list-disc">
+              <li>
+                <strong>Published Rates:</strong> All room tariffs are displayed in Indian Rupees
+                (INR ₹) per room per night, based on the designated room occupancy.
+              </li>
+              <li>
+                <strong>Goods & Services Tax (GST):</strong> As required under Indian tax laws, GST
+                is levied on accommodation and dining services at applicable government rates (e.g.
+                5% or 12%).
+              </li>
+              <li>
+                <strong>Standard Room Inclusions:</strong> Room rates include high-speed optical
+                fiber Wi-Fi, daily housekeeping, electric hot water kettle, free on-premises secure
+                parking, and 24/7 front desk assistance.
+              </li>
+              <li>
+                <strong>Meal Plans:</strong> Published room tariffs do not include meals unless a
+                specific breakfast/dining package (such as &ldquo;Deluxe Room With Breakfast&rdquo;)
+                is explicitly selected and confirmed.
+              </li>
+              <li>
+                <strong>Payment Settlement:</strong> We do not collect credit card credentials on
+                our website. Final room tariff and incidental charges are payable at the hotel front
+                desk via UPI, major Indian debit/credit cards, or cash within statutory Income Tax
+                Act limits.
+              </li>
+            </ul>
+
+            <h2>6. Check-in & Check-out Policies</h2>
+            <ul className="list-disc">
+              <li>
+                <strong>Standard Check-in Time:</strong> {hotel.checkInTime}
+              </li>
+              <li>
+                <strong>Standard Check-out Time:</strong> {hotel.checkOutTime}
+              </li>
+              <li>
+                <strong>Early Check-in:</strong> Check-in between 8:00 AM and {hotel.checkInTime} is
+                subject to room availability and may attract a nominal early check-in charge.
+                Check-in prior to 8:00 AM requires reserving the room for the preceding night.
+              </li>
+              <li>
+                <strong>Late Check-out:</strong> Extension up to 2:00 PM is subject to room
+                availability and may incur a half-day charge; check-out after 2:00 PM incurs a full
+                night&apos;s tariff.
+              </li>
+            </ul>
+
+            <h2>7. Cancellation, Amendment & Refund Policy</h2>
+            <ul className="list-disc">
+              <li>
+                <strong>Free Cancellation Window:</strong> Guests may cancel their booking request
+                free of charge up to <strong>24 hours prior</strong> to the scheduled check-in time
+                (12:00 PM on the arrival date).
+              </li>
+              <li>
+                <strong>Late Cancellation & No-Show:</strong> Cancellations received less than 24
+                hours before check-in, or failure of the guest to arrive on the scheduled date
+                (&ldquo;No-Show&rdquo;), will be billed an amount equal to 100% of the first
+                night&apos;s room tariff plus applicable taxes.
+              </li>
+              <li>
+                <strong>Modifications:</strong> Date changes are subject to room availability and
+                the prevailing tariff on the revised dates.
+              </li>
+              <li>
+                <strong>Refund Processing:</strong> Any approved refunds are credited back to the
+                original mode of payment within 7 to 10 business days as per banking cycles.
+              </li>
+            </ul>
+
+            <h2>8. Guest Conduct, Safety & Property Care</h2>
+            <ul className="list-disc">
+              <li>
+                <strong>Prohibited Substances & Contraband:</strong> The possession or consumption
+                of illegal narcotics or psychotropic substances under the <em>NDPS Act, 1985</em>,
+                unlicensed weapons, explosives, or hazardous materials is strictly prohibited on
+                hotel premises. Violations will result in immediate police referral and eviction.
+              </li>
+              <li>
+                <strong>100% Non-Smoking Guest Rooms:</strong> All rooms at Yashdeep Palace are
+                designated strictly non-smoking. Smoking is permitted only in designated outdoor
+                spaces. A deep-cleaning sanitation charge of ₹2,500 will be levied for in-room
+                smoking violations.
+              </li>
+              <li>
+                <strong>Care of Property:</strong> Guests are liable for any physical damage,
+                breakage, staining, or missing hotel fixtures, linens, furniture, or electronic
+                appliances caused by themselves or their accompanying visitors.
+              </li>
+              <li>
+                <strong>Quiet Hours:</strong> To ensure peace for all guests, quiet hours are
+                observed from 10:00 PM to 7:00 AM.
+              </li>
+              <li>
+                <strong>Visitor Policy:</strong> External non-resident visitors are permitted in the
+                lobby and restaurant. External visitors are not permitted into guest rooms after
+                9:00 PM without front desk registration and statutory photo ID.
+              </li>
+            </ul>
+
+            <h2>9. AI Front Desk Concierge Disclaimer</h2>
+            <p>
+              The AI concierge on our website provides conversational assistance, room descriptions,
+              and preliminary price calculations. The AI assistant cannot bypass contact
+              verification or directly generate legally binding room commitments. All prices and
+              special packages remain subject to front desk confirmation.
+            </p>
+
+            <h2>10. Limitation of Liability & Force Majeure</h2>
+            <p>
+              The hotel shall not be liable for loss, theft, or damage of personal valuables or cash
+              left unattended in guest rooms. Guests are advised to keep high-value items in their
+              personal custody or request reception safe-keeping where available.
+            </p>
+            <p>
+              Neither party shall be liable for non-performance or delay arising from events of
+              Force Majeure, including acts of God, extreme weather, flooding, fire, epidemics,
+              government directives, infrastructure grid failures, or civil disturbances.
+            </p>
+
+            <h2>11. Governing Law & Dispute Jurisdiction</h2>
+            <p>
+              These Terms, all room bookings, and all disputes arising out of or related to your
+              stay at Yashdeep Palace shall be governed exclusively by the laws of India.
+            </p>
+            <p>
+              Any legal proceeding, dispute, or claim arising in connection with these Terms or your
+              stay shall be subject to the exclusive jurisdiction of the competent courts in{" "}
+              <strong>{legalAndPrivacy.jurisdiction}</strong>.
+            </p>
+
+            <h2>12. Contact Information</h2>
+            <div className="legal-grievance-box">
+              <h3 className="text-base font-semibold text-foreground mb-2 flex items-center gap-2">
+                <Building size={18} className="text-gold" /> Front Desk & Reception
+              </h3>
+              <p className="text-sm text-foreground mb-1">
+                <strong>Yashdeep Palace</strong> · {hotel.address}
+              </p>
+              <p className="text-sm text-muted-foreground mb-0">
+                Telephone:{" "}
+                <a href={hotel.phoneLink} className="text-gold hover:underline">
+                  {hotel.phone}
+                </a>{" "}
+                /{" "}
+                <a href={`tel:${hotel.phone2.replace(/\s+/g, "")}`} className="hover:underline">
+                  {hotel.phone2}
+                </a>{" "}
+                · Email:{" "}
+                <a href={`mailto:${hotel.email}`} className="text-gold hover:underline">
+                  {hotel.email}
+                </a>
+              </p>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-border flex flex-wrap items-center justify-between gap-4 text-xs text-muted-foreground">
+              <span>Last updated: {legalAndPrivacy.lastUpdated}</span>
+              <Link to="/privacy" className="text-gold font-medium hover:underline">
+                View Privacy Policy (DPDP Act) <ArrowRight size={14} className="inline ml-1" />
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     </>

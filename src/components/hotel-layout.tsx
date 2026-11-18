@@ -140,7 +140,8 @@ export function HotelFooter() {
                 <Link to="/about">About Yashdeep Palace</Link>
                 <Link to="/booking">Reservation enquiries</Link>
                 <Link to="/contact">Contact & directions</Link>
-                <Link to="/privacy">Privacy & booking terms</Link>
+                <Link to="/privacy">Privacy Policy (DPDP Act)</Link>
+                <Link to="/terms">Terms & Conditions</Link>
               </div>
             </div>
             <div>

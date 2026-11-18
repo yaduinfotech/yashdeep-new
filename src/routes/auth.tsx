@@ -185,8 +185,15 @@ function CustomerAccount() {
                     <ArrowRight />
                   </Button>
                   <p className="rate-note mt-4">
-                    Signup or login using your email address to access your customer account.{" "}
-                    <Link to="/privacy">Privacy information</Link>
+                    By signing in, you agree to our{" "}
+                    <Link to="/terms" className="underline hover:text-foreground">
+                      Terms & Conditions
+                    </Link>{" "}
+                    and consent to personal data processing as per our{" "}
+                    <Link to="/privacy" className="underline hover:text-foreground">
+                      Privacy Policy (DPDP Act)
+                    </Link>
+                    .
                   </p>
                 </div>
               </form>

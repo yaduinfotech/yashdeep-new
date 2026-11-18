@@ -854,6 +854,18 @@ export function BookingPage({
                     </div>
                   )}
 
+                  <p className="text-xs text-muted-foreground my-4">
+                    By confirming this booking request, you agree to our{" "}
+                    <Link to="/terms" target="_blank" className="text-gold underline">
+                      Terms & Conditions
+                    </Link>{" "}
+                    and consent to the processing of your personal data under the{" "}
+                    <Link to="/privacy" target="_blank" className="text-gold underline">
+                      Privacy Policy (DPDP Act)
+                    </Link>
+                    .
+                  </p>
+
                   <div className="wizard-actions">
                     <Button type="button" variant="outline" onClick={() => setStep(2)}>
                       <ArrowLeft /> Edit details
@@ -891,7 +903,15 @@ export function BookingPage({
               </div>
               <div className="policy-note">
                 Your reservation is placed directly into our Hotel Management System upon
-                verification.
+                verification. Read our{" "}
+                <Link to="/terms" className="text-gold underline" target="_blank">
+                  Terms & Conditions
+                </Link>{" "}
+                and{" "}
+                <Link to="/privacy" className="text-gold underline" target="_blank">
+                  Privacy Policy (DPDP Act)
+                </Link>
+                .
               </div>
               <Link to="/booking-assistant" className="text-link mb-5">
                 AI booking concierge <ArrowRight />

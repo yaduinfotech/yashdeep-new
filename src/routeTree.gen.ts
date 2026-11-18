@@ -21,6 +21,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RestaurantRouteImport } from './routes/restaurant'
 import { Route as RoomsRouteImport } from './routes/rooms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ApiBookingAgentRouteImport } from './routes/api/booking-agent'
 import { Route as RoomsIndexRouteImport } from './routes/rooms.index'
 import { Route as RoomsRoomRouteImport } from './routes/rooms.$room'
@@ -85,6 +86,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiBookingAgentRoute = ApiBookingAgentRouteImport.update({
   id: '/api/booking-agent',
   path: '/api/booking-agent',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/restaurant': typeof RestaurantRoute
   '/rooms': typeof RoomsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/api/booking-agent': typeof ApiBookingAgentRoute
   '/rooms/$room': typeof RoomsRoomRoute
   '/rooms/': typeof RoomsIndexRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/restaurant': typeof RestaurantRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/api/booking-agent': typeof ApiBookingAgentRoute
   '/rooms/$room': typeof RoomsRoomRoute
   '/rooms': typeof RoomsIndexRoute
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/restaurant': typeof RestaurantRoute
   '/rooms': typeof RoomsRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/api/booking-agent': typeof ApiBookingAgentRoute
   '/rooms/$room': typeof RoomsRoomRoute
   '/rooms/': typeof RoomsIndexRoute
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
     | '/restaurant'
     | '/rooms'
     | '/sitemap.xml'
+    | '/terms'
     | '/api/booking-agent'
     | '/rooms/$room'
     | '/rooms/'
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/restaurant'
     | '/sitemap.xml'
+    | '/terms'
     | '/api/booking-agent'
     | '/rooms/$room'
     | '/rooms'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/restaurant'
     | '/rooms'
     | '/sitemap.xml'
+    | '/terms'
     | '/api/booking-agent'
     | '/rooms/$room'
     | '/rooms/'
@@ -218,6 +230,7 @@ export interface RootRouteChildren {
   RestaurantRoute: typeof RestaurantRoute
   RoomsRoute: typeof RoomsRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   ApiBookingAgentRoute: typeof ApiBookingAgentRoute
 }
 
@@ -307,6 +320,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/booking-agent': {
       id: '/api/booking-agent'
       path: '/api/booking-agent'
@@ -356,6 +376,7 @@ const rootRouteChildren: RootRouteChildren = {
   RestaurantRoute: RestaurantRoute,
   RoomsRoute: RoomsRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   ApiBookingAgentRoute: ApiBookingAgentRoute,
 }
 export const routeTree = rootRouteImport

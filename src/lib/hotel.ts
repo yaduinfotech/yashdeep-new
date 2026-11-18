@@ -20,6 +20,27 @@ export const hotel = {
   checkOutTime: "10:00 AM",
 };
 
+export const legalAndPrivacy = {
+  dataFiduciary: "Yashdeep Palace",
+  registeredAddress:
+    "Opposite Honda Car Gate No. 4, RA 403, Karuli Industrial Area, Khushkhera, Rajasthan 301707, India",
+  jurisdiction: "Alwar / Tijara, Rajasthan, India",
+  applicableAct: "Digital Personal Data Protection Act, 2023 (Act No. 22 of 2023, India)",
+  grievanceOfficer: {
+    title: "Data Protection & Grievance Officer",
+    entity: "Yashdeep Palace",
+    email: "privacy@yashdeeppalace.com",
+    contactEmail: "reception@yashdeeppalace.com",
+    phone: "+91 82220 20599",
+    address:
+      "Opposite Honda Car Gate No. 4, RA 403, Karuli Industrial Area, Khushkhera, Rajasthan 301707, India",
+    acknowledgementTimeline: "Within 48 business hours",
+    resolutionTimeline: "Within 30 calendar days",
+  },
+  regulatoryAuthority: "Data Protection Board of India (DPBI)",
+  lastUpdated: "November 18, 2026",
+};
+
 export const images = {
   exterior: exterior.url,
   deluxe: deluxe.url,
